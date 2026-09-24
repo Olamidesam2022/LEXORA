@@ -1,0 +1,6 @@
+# Minimal Supabase CLI config (placeholder)
+# Run `supabase init` locally to generate a complete config and link to a project.
+project_ref = ""
+
+# Local DB connection settings can be added here if needed.
+# See: https://supabase.com/docs/guides/cli

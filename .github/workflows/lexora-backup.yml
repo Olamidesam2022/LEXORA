@@ -1,0 +1,55 @@
+name: LEXORA off-site backup
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      PGPASSWORD: ${{ secrets.LEXORA_DATABASE_PASSWORD }}
+      PGHOST: ${{ secrets.LEXORA_DATABASE_HOST }}
+      PGPORT: ${{ secrets.LEXORA_DATABASE_PORT }}
+      PGUSER: ${{ secrets.LEXORA_DATABASE_USER }}
+      PGDATABASE: ${{ secrets.LEXORA_DATABASE_NAME }}
+      PGSSLMODE: require
+      RCLONE_CONFIG: ${{ runner.temp }}/rclone.conf
+      LEXORA_BACKUP_DESTINATION: ${{ secrets.LEXORA_BACKUP_DESTINATION }}
+      RCLONE_CONFIG_SUPABASE_TYPE: s3
+      RCLONE_CONFIG_SUPABASE_PROVIDER: Other
+      RCLONE_CONFIG_SUPABASE_ENV_AUTH: "false"
+      RCLONE_CONFIG_SUPABASE_ACCESS_KEY_ID: ${{ secrets.LEXORA_STORAGE_S3_ACCESS_KEY }}
+      RCLONE_CONFIG_SUPABASE_SECRET_ACCESS_KEY: ${{ secrets.LEXORA_STORAGE_S3_SECRET_KEY }}
+      RCLONE_CONFIG_SUPABASE_ENDPOINT: ${{ secrets.LEXORA_STORAGE_S3_ENDPOINT }}
+      RCLONE_CONFIG_SUPABASE_REGION: ${{ secrets.LEXORA_STORAGE_S3_REGION }}
+    steps:
+      - name: Install PostgreSQL client and rclone
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client rclone
+
+      - name: Write protected rclone configuration
+        env:
+          RCLONE_CONFIG_CONTENT: ${{ secrets.LEXORA_RCLONE_CONFIG }}
+        run: |
+          umask 077
+          printf '%s' "$RCLONE_CONFIG_CONTENT" > "$RCLONE_CONFIG"
+
+      - name: Dump database and copy document objects off-site
+        run: |
+          set -euo pipefail
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          dump="$RUNNER_TEMP/lexora-${stamp}.dump"
+          pg_dump --format=custom --no-owner --no-privileges --file="$dump"
+          rclone copyto "$dump" "$LEXORA_BACKUP_DESTINATION/database/lexora-${stamp}.dump"
+          rclone copy "supabase:lexora-documents" "$LEXORA_BACKUP_DESTINATION/storage/lexora-documents" --create-empty-src-dirs
+
+      - name: Remove temporary dump and credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/lexora-*.dump "$RCLONE_CONFIG"

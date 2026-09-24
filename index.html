@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>LEXORA | Zyph Legal LP</title>
+    <meta
+      name="description"
+      content="A connected legal workspace for Zyph Legal LP: clients, matters, documents, approvals, and billing."
+    />
+    <meta name="author" content="Zyph Legal LP" />
+
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme") || "light";
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          var isDark = theme === "dark" || (theme === "system" && prefersDark);
+          document.documentElement.classList.toggle("dark", isDark);
+          document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+        } catch (_) {}
+      })();
+    </script>
+    <meta name="theme-color" content="#153d32" />
+    <link rel="icon" type="image/svg+xml" href="/lexora-mark.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/lexora-mark.svg" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
