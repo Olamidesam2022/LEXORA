@@ -46,9 +46,13 @@ export default function Landing() {
             <a className="landing-nav-link" href="#workflow">Workflow</a>
             <a className="landing-nav-link" href="#capabilities">Capabilities</a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            <Link to="/signup" className="landing-nav-link hidden text-sm font-semibold text-muted-foreground sm:inline-flex">Request access</Link>
+            <Link to="/signup" className="landing-request-access" aria-label="Request access">
+              <span className="hidden sm:inline">Request access</span>
+              <span className="sm:hidden">Access</span>
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
             <Link to="/login" className="landing-login-link">Sign in <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </div>
@@ -59,7 +63,7 @@ export default function Landing() {
           <div className="landing-hero-copy">
             <div className="landing-eyebrow"><span className="landing-eyebrow-dot" /> LEGAL WORK, IN GOOD ORDER</div>
             <h1>Clarity for every<br /><span>matter that moves</span></h1>
-            <p className="landing-lede">LEXORA brings client relationships, legal work, documents, approvals, and billing into one considered workspace for Zyph Legal LP.</p>
+            <p className="landing-lede">LEXORA brings client relationships, legal work, documents, approvals, and billing into one considered workspace for legal professionals.</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to="/login" className="landing-cta">Enter your workspace <ArrowRight className="h-4 w-4" /></Link>
               <a href="#capabilities" className="landing-text-link">Explore the platform <ArrowDown className="h-4 w-4" /></a>
@@ -142,15 +146,15 @@ export default function Landing() {
         </section>
 
         <section className="landing-container landing-bottom-cta">
-          <div><p className="landing-section-kicker">ZYPH LEGAL LP</p><h2>Your work, in one place.</h2><p>A calmer way to keep matters moving and records in order.</p></div>
+          <div><p className="landing-section-kicker"></p><h2>Your work, in one place.</h2><p>A calmer way to keep matters moving and records in order.</p></div>
           <div className="flex flex-wrap items-center gap-3">
             <Link to="/login" className="landing-cta landing-cta-light">Sign in <ArrowRight className="h-4 w-4" /></Link>
-            <Link to="/signup" className="landing-text-link">Request access <ArrowUpRight className="h-4 w-4" /></Link>
+            <Link to="/signup" className="landing-bottom-request-access">Request access <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </section>
       </main>
 
-      <footer className="landing-footer"><div className="landing-container"><BrandLogo /><span>© {new Date().getFullYear()} Zyph Legal LP · LEXORA Legal Workspace</span></div></footer>
+      <footer className="landing-footer"><div className="landing-container"><BrandLogo /><span>© {new Date().getFullYear()} adeadebola LEXORA Legal Workspace</span></div></footer>
     </div>
   );
 }
