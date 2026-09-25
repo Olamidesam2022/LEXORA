@@ -304,7 +304,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
                 <button
                   key={matterItem.id}
                   onClick={() => onViewMatter(matterItem)}
-                  className="clean-list-row grid-cols-[auto_1fr]"
+                  className="clean-list-row flex-row items-center"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-background">

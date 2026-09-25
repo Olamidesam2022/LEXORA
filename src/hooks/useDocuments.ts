@@ -12,6 +12,7 @@ interface DocumentRow {
   name: string;
   type: DocumentType;
   matter_id: string | null;
+  client_id?: string | null;
   storage_path: string | null;
   mime_type: string | null;
   version: string;
@@ -26,12 +27,13 @@ interface DocumentRow {
 
 interface MatterRow {
   id: string;
+  client_id?: string | null;
   assigned_to?: string | null;
 }
 
-interface MatterAccessRow {
-  matter_id: string;
-  user_id: string;
+interface ClientAssignmentRow {
+  id: string;
+  assigned_to: string | null;
 }
 
 const toLegalDocument = (
@@ -76,31 +78,28 @@ export function useDocuments() {
 
     const documentsQuery = supabase
       .from("documents")
-      .select("id,name,type,matter_id,storage_path,mime_type,version,uploaded_by,created_by,entered_by,size,status,created_at,updated_at,deleted_at")
+      .select("id,name,type,matter_id,client_id,storage_path,mime_type,version,uploaded_by,created_by,entered_by,size,status,created_at,updated_at,deleted_at")
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
     const profilesQuery = supabase.from("profiles").select("id,full_name");
     const matterQuery =
       isViewingAs && viewingAsUser
-        ? supabase.from("matters").select("id,assigned_to")
+        ? supabase.from("matters").select("id,client_id,assigned_to")
         : null;
-    const accessQuery =
-      isViewingAs && viewingAsUser
-        ? supabase.from("matter_access").select("matter_id,user_id")
-        : null;
+    const clientAssignmentsQuery = supabase.from("clients").select("id,assigned_to");
 
-    const [documentsResult, profilesResult, matterResult, accessResult] = await Promise.all([
+    const [documentsResult, profilesResult, matterResult, clientAssignmentsResult] = await Promise.all([
       documentsQuery,
       profilesQuery,
       matterQuery ?? Promise.resolve({ data: [], error: null }),
-      accessQuery ?? Promise.resolve({ data: [], error: null }),
+      clientAssignmentsQuery,
     ]);
     const { data, error } = documentsResult;
 
     if (error) throw error;
     if (profilesResult.error) throw profilesResult.error;
     if (matterResult.error) console.error("Failed to load document matter access:", matterResult.error);
-    if (accessResult.error) console.error("Failed to load document access grants:", accessResult.error);
+    if (clientAssignmentsResult.error) console.error("Failed to load client assignments:", clientAssignmentsResult.error);
 
     const profileNameById = new Map<string, string>();
     for (const profileRow of profilesResult.data || []) {
@@ -126,24 +125,24 @@ export function useDocuments() {
       return rawValue;
     };
 
-    const viewer = viewingAsUser
+    const viewer = isViewingAs && viewingAsUser
       ? { id: viewingAsUser.id, role: viewingAsUser.role }
       : { id: user.id, role };
     const accessibleMatterIds = new Set<string>();
+    const assignedClientIds = new Set(
+      ((clientAssignmentsResult.data || []) as ClientAssignmentRow[])
+        .filter((client) => client.assigned_to === viewer.id)
+        .map((client) => client.id),
+    );
 
     if (isViewingAs && viewingAsUser) {
       ((matterResult.data || []) as MatterRow[]).forEach((matterRow) => {
         if (
           viewer.role === "managing_partner" ||
           viewer.role === "operations_manager" ||
-          matterRow.assigned_to === viewer.id
+          (!!matterRow.client_id && assignedClientIds.has(matterRow.client_id))
         ) {
           accessibleMatterIds.add(matterRow.id);
-        }
-      });
-      ((accessResult.data || []) as MatterAccessRow[]).forEach((accessRow) => {
-        if (accessRow.user_id === viewer.id) {
-          accessibleMatterIds.add(accessRow.matter_id);
         }
       });
     }
@@ -151,10 +150,8 @@ export function useDocuments() {
     const visibleRows = ((data || []) as DocumentRow[]).filter((row) => {
       if (!isViewingAs || !viewingAsUser) return true;
       if (viewer.role === "managing_partner" || viewer.role === "operations_manager") return true;
-      if (!row.matter_id) {
-        return row.created_by === viewer.id || row.entered_by === viewer.id;
-      }
-      return accessibleMatterIds.has(row.matter_id);
+      if (row.client_id && assignedClientIds.has(row.client_id)) return true;
+      return !!row.matter_id && accessibleMatterIds.has(row.matter_id);
     });
 
     setDocuments(

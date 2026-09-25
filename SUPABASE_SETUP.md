@@ -8,6 +8,7 @@ These SQL migrations create a new LEXORA schema only. They do not create users, 
    - `supabase/migrations/20260922_document_uploader_names.sql`
    - `supabase/migrations/20260924_lexora_foundation.sql`
    - `supabase/migrations/20260926_lexora_workflow_security.sql`
+   - `supabase/migrations/20260927090000_legal_officer_assigned_client_edits.sql`
 3. Copy `.env.example` to `.env.local` and set the frontend and server credentials. Keep the service role key server-only.
 4. Start the app with `npm run dev` and `npm run dev:api`.
 5. When ready to create the first user, sign up through LEXORA. The profile starts as a pending Legal Officer. Promote only that first account to Managing Partner in SQL Editor:

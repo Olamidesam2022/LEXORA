@@ -48,7 +48,6 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            
             <Link to="/login" className="landing-login-link">Sign in <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </div>

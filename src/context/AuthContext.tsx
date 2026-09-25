@@ -93,14 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextSession?.user ?? null);
 
       if (nextSession?.user) {
+        setIsLoading(true);
         setTimeout(() => {
-          fetchProfile(nextSession.user.id).catch(() => setProfile(null));
+          fetchProfile(nextSession.user.id)
+            .catch(() => setProfile(null))
+            .finally(() => setIsLoading(false));
         }, 0);
       } else {
         setProfile(null);
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     });
 
     loadSession().catch(() => {

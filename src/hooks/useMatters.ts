@@ -25,6 +25,11 @@ interface MatterAccessRow {
   user_id: string;
 }
 
+interface ClientAssignmentRow {
+  id: string;
+  assigned_to: string | null;
+}
+
 export interface MatterInput {
   title: string;
   clientId?: string;
@@ -55,16 +60,13 @@ export const toMatter = (
   row: MatterRow,
   viewer?: { id: string; role?: string | null },
   assignedUserIds: string[] = [],
+  clientAssignedToViewer = false,
 ): Matter => {
   const meta = parseDescription(row.description);
   const createdAt = new Date(row.created_at);
   const enteredBy = row.entered_by || meta.enteredBy || row.created_by;
   const canEditAll = viewer?.role === "operations_manager" || viewer?.role === "managing_partner";
   const canDeleteAll = viewer?.role === "managing_partner";
-  const isAssigned =
-    !!viewer?.id &&
-    (row.assigned_to === viewer.id || assignedUserIds.includes(viewer.id));
-
   return {
     id: row.id,
     clientId: row.client_id || undefined,
@@ -85,18 +87,19 @@ export const toMatter = (
     enteredBy,
     assignedTo: row.assigned_to || undefined,
     assignedUserIds,
-    canEdit: row.matter_status !== "closed" && (canEditAll || isAssigned || row.created_by === viewer?.id),
+    canEdit: row.matter_status !== "closed" && (canEditAll || (viewer?.role === "legal_officer" && clientAssignedToViewer)),
     canDelete: canDeleteAll,
   };
 };
 
 const canMatterBeSeenByViewer = (
-  row: MatterRow,
+  _row: MatterRow,
   viewer: { id: string; role?: string | null },
-  assignedUserIds: string[],
+  _assignedUserIds: string[],
+  clientAssignedToViewer: boolean,
 ) => {
   if (viewer.role === "operations_manager" || viewer.role === "managing_partner") return true;
-  return row.assigned_to === viewer.id || assignedUserIds.includes(viewer.id);
+  return clientAssignedToViewer;
 };
 
 export function useMatters() {
@@ -117,8 +120,13 @@ export function useMatters() {
       .select("id,title,description,created_by,creator_email,entered_by,assigned_to,client_id,practice_area,matter_status,closed_at,created_at")
       .order("created_at", { ascending: false });
     const accessQuery = supabase.from("matter_access").select("matter_id,user_id");
+    const clientAssignmentsQuery = supabase.from("clients").select("id,assigned_to");
 
-    const [mattersResult, accessResult] = await Promise.all([mattersQuery, accessQuery]);
+    const [mattersResult, accessResult, clientAssignmentsResult] = await Promise.all([
+      mattersQuery,
+      accessQuery,
+      clientAssignmentsQuery,
+    ]);
     const { data, error } = mattersResult;
 
     if (error) {
@@ -130,8 +138,20 @@ export function useMatters() {
     if (accessResult.error) {
       console.error("Failed to load matter assignments:", accessResult.error);
     }
+    if (clientAssignmentsResult.error) {
+      console.error("Failed to load client assignments:", clientAssignmentsResult.error);
+    }
 
-  const assignedUsersByMatter = new Map<string, string[]>();
+    const viewer = isViewingAs && viewingAsUser
+      ? { id: viewingAsUser.id, role: viewingAsUser.role }
+      : { id: user.id, role };
+    const assignedClientIds = new Set(
+      ((clientAssignmentsResult.data || []) as ClientAssignmentRow[])
+        .filter((client) => client.assigned_to === viewer.id)
+        .map((client) => client.id),
+    );
+
+    const assignedUsersByMatter = new Map<string, string[]>();
     ((accessResult.error ? [] : accessResult.data || []) as MatterAccessRow[]).forEach((access) => {
       assignedUsersByMatter.set(access.matter_id, [
         ...(assignedUsersByMatter.get(access.matter_id) || []),
@@ -139,21 +159,24 @@ export function useMatters() {
       ]);
     });
 
-    const viewer = viewingAsUser
-      ? { id: viewingAsUser.id, role: viewingAsUser.role }
-      : { id: user.id, role };
     const visibleRows = ((data || []) as MatterRow[]).filter((row) => {
       if (!isViewingAs) return true;
       return canMatterBeSeenByViewer(
         row,
         viewer,
         assignedUsersByMatter.get(row.id) || [],
+        !!row.client_id && assignedClientIds.has(row.client_id),
       );
     });
 
     setMatters(
       visibleRows.map((row) =>
-        toMatter(row, viewer, assignedUsersByMatter.get(row.id) || []),
+        toMatter(
+          row,
+          viewer,
+          assignedUsersByMatter.get(row.id) || [],
+          !!row.client_id && assignedClientIds.has(row.client_id),
+        ),
       ),
     );
     setIsLoading(false);

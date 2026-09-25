@@ -76,8 +76,8 @@ app.get("/api/dashboard/summary", async (req, res) => {
 
 app.get("/api/clients", async (req, res) => {
   const search = String(req.query.search || "").trim();
-  let query = req.db.from("clients").select("id,display_name,legal_name,email,phone,client_type,created_at")
-    .is("deleted_at", null).order("display_name").limit(30);
+  let query = req.db.from("clients").select("id,display_name,legal_name,email,phone,client_type,created_at,assigned_to")
+    .is("deleted_at", null).order("display_name");
   if (search) {
     const safeSearch = search.replace(/[%,_()]/g, " ").trim();
     if (safeSearch) query = query.or(`display_name.ilike.%${safeSearch}%,legal_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
@@ -87,7 +87,7 @@ app.get("/api/clients", async (req, res) => {
   return res.json({ clients: data || [] });
 });
 
-app.post("/api/clients", async (req, res) => {
+app.post("/api/clients", requireRoles("operations_manager", "managing_partner"), async (req, res) => {
   const { display_name, legal_name, client_type, email, phone, address, notes } = req.body || {};
   if (!display_name?.trim()) return jsonError(res, 400, "display_name is required");
   const { data, error } = await req.db.from("clients").insert({
@@ -98,7 +98,7 @@ app.post("/api/clients", async (req, res) => {
 });
 
 app.patch("/api/clients/:clientId", async (req, res) => {
-  const allowed = ["display_name", "legal_name", "client_type", "email", "phone", "address", "notes"];
+  const allowed = ["display_name", "legal_name", "client_type", "email", "phone", "address", "notes", "assigned_to"];
   const updates = Object.fromEntries(Object.entries(req.body || {}).filter(([key]) => allowed.includes(key)));
   updates.updated_at = new Date().toISOString();
   const { data, error } = await req.db.from("clients").update(updates).eq("id", req.params.clientId).select().maybeSingle();
@@ -288,7 +288,7 @@ app.post("/api/documents/:documentId/soft-delete", requireRoles("managing_partne
   return res.json({ document: data });
 });
 
-app.post("/api/billing/fee-notes", requireRoles("operations_manager", "managing_partner"), async (req, res) => {
+app.post("/api/billing/fee-notes", requireRoles("legal_officer", "operations_manager", "managing_partner"), async (req, res) => {
   const { client_id, matter_id, reference, description, amount, currency, due_at, file_document_id } = req.body || {};
   if (!client_id || !matter_id || !reference || !description || !Number.isFinite(Number(amount))) return jsonError(res, 400, "client_id, matter_id, reference, description, and amount are required");
   const { data, error } = await req.db.from("fee_notes").insert({ client_id, matter_id, reference, description, amount, currency, due_at, file_document_id, created_by: req.profile.id }).select().single();
@@ -296,7 +296,7 @@ app.post("/api/billing/fee-notes", requireRoles("operations_manager", "managing_
   return res.status(201).json({ fee_note: data });
 });
 
-app.get("/api/billing/records", requireRoles("operations_manager", "managing_partner"), async (req, res) => {
+app.get("/api/billing/records", requireRoles("legal_officer", "operations_manager", "managing_partner"), async (req, res) => {
   const [feeResult, paymentResult] = await Promise.all([
     req.db.from("fee_notes").select("id,client_id,matter_id,reference,description,amount,currency,issued_at,due_at,status,file_document_id,clients(display_name),matters!fee_notes_matter_client_fkey(title)").is("deleted_at", null).order("issued_at", { ascending: false }),
     req.db.from("payments").select("id,client_id,matter_id,fee_note_id,amount,currency,paid_at,payment_method,reference,proof_document_id,clients(display_name),matters!payments_matter_client_fkey(title)").is("deleted_at", null).order("paid_at", { ascending: false }),
@@ -306,7 +306,7 @@ app.get("/api/billing/records", requireRoles("operations_manager", "managing_par
   return res.json({ fee_notes: feeResult.data || [], payments: paymentResult.data || [] });
 });
 
-app.post("/api/billing/payments", requireRoles("operations_manager", "managing_partner"), async (req, res) => {
+app.post("/api/billing/payments", requireRoles("legal_officer", "operations_manager", "managing_partner"), async (req, res) => {
   const { client_id, matter_id, fee_note_id, amount, currency, payment_method, reference, proof_document_id, paid_at } = req.body || {};
   if (!client_id || !matter_id || !Number.isFinite(Number(amount)) || Number(amount) <= 0) return jsonError(res, 400, "client_id, matter_id, and a positive amount are required");
   const { data, error } = await req.db.from("payments").insert({ client_id, matter_id, fee_note_id, amount, currency, payment_method, reference, proof_document_id, paid_at, created_by: req.profile.id }).select().single();
@@ -369,7 +369,10 @@ app.patch("/api/admin/users/:userId", requireRoles("managing_partner"), async (r
 
 app.use((err, _req, res, _next) => {
   console.error("LEXORA API error", err);
-  return jsonError(res, 500, "Unexpected API error");
+  const message = process.env.NODE_ENV === "production"
+    ? "Unexpected API error"
+    : (err instanceof Error ? err.message : String(err));
+  return jsonError(res, 500, message || "Unexpected API error");
 });
 
 export default app;

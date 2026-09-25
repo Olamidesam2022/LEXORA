@@ -57,7 +57,7 @@ const navItems: NavItem[] = [
     id: "billing",
     label: "Billing",
     icon: ReceiptText,
-    roles: ["operations_manager", "managing_partner"],
+    roles: ["operations_manager", "managing_partner", "legal_officer"],
   },
   {
     id: "litigation",

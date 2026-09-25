@@ -4,16 +4,17 @@ import {
   Plus, 
   Shield, 
   User as UserIcon,
-  Mail,
-  Building2,
   Edit,
   Eye,
   Trash2,
-  Key
+  Key,
+  MoreHorizontal,
 } from 'lucide-react';
 import { User, UserRole } from '@/types/legal';
 import { cn } from '@/lib/utils';
 import { AppTablePagination, AppTableShell } from '@/components/ui/app-table';
+import { AlignedList, AlignedListRow } from '@/components/ui/aligned-list';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface UserManagementProps {
   users: User[];
@@ -49,10 +50,6 @@ export function UserManagement({
     currentUser.role === 'operations_manager'
       ? ['all', 'legal_officer']
       : ['all', 'operations_manager', 'managing_partner', 'legal_officer'];
-  const tableGridClass = canManageUsers
-    ? "lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_12rem_9rem]"
-    : "lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_12rem]";
-
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -157,117 +154,33 @@ export function UserManagement({
 
       {/* Users List */}
       <AppTableShell>
-        <div className={cn("table-header hidden gap-3 px-4 py-3 lg:grid", tableGridClass)}>
-          <span>User</span>
-          <span>Department</span>
-          <span>Status</span>
-          {canManageUsers && <span className="text-center">Actions</span>}
-        </div>
-        {pagedUsers.map((user, index) => {
-          const isCurrentUser = user.id === currentUser.id;
-          
-          return (
-            <div
+        <AlignedList>
+          {pagedUsers.map((user, index) => {
+            const isCurrentUser = user.id === currentUser.id;
+            return <AlignedListRow
               key={user.id}
-              className={cn(
-                "clean-list-row user-list-row animate-fade-in lg:items-center",
-                tableGridClass,
-                isCurrentUser && "bg-primary/5"
-              )}
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <div className="user-list-primary flex min-w-0 items-center gap-3">
-                <div className="user-list-identity flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                    {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="truncate text-sm font-extrabold text-foreground">
-                      {user.name}
-                      {isCurrentUser && (
-                        <span className="ml-2 text-xs font-normal text-muted-foreground">(You)</span>
-                      )}
-                    </h4>
-                    <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">{user.email}</span>
-                    </div>
-                  </div>
-                </div>
-                <span className={cn("user-list-mobile-role status-pill", roleStyles[user.role].color)}>
-                  {roleStyles[user.role].label}
-                </span>
-              </div>
-
-              <div className="user-list-secondary">
-                <div className="user-list-detail">
-                  <span className="user-list-field-label">Department</span>
-                  <div className="user-list-department flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
-                    <Building2 className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{user.department}</span>
-                  </div>
-                </div>
-
-                <div className="user-list-detail">
-                  <span className="user-list-field-label">Account status</span>
-                  <div className="user-list-status flex flex-wrap items-center gap-2">
-                    <span className={cn("user-list-desktop-role status-pill", roleStyles[user.role].color)}>
-                      {roleStyles[user.role].label}
-                    </span>
-                    {user.status && (
-                      <span className="text-sm capitalize text-muted-foreground">{user.status}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {canManageUsers && (
-                <div className="user-list-actions flex items-center gap-1 lg:justify-center">
-                  <div className="user-list-primary-actions flex items-center gap-1">
-                    {onEditUser && (
-                      <button onClick={() => onEditUser(user)} className="icon-button user-list-text-action" aria-label={`Edit ${user.name}`}>
-                        <Edit className="h-4 w-4" />
-                        <span className="user-action-label">Edit</span>
-                      </button>
-                    )}
-                    {onViewAsUser && (
-                      <button
-                        onClick={() => onViewAsUser(user)}
-                        className={cn(
-                          "icon-button user-list-text-action",
-                          viewingAsUserId === user.id && "bg-primary text-primary-foreground",
-                          isCurrentUser && "cursor-not-allowed text-muted-foreground/50",
-                        )}
-                        disabled={isCurrentUser}
-                        title={viewingAsUserId === user.id ? "Currently viewing" : "View as user"}
-                        aria-label={`View as ${user.name}`}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="user-action-label">View</span>
-                      </button>
-                    )}
-                  </div>
-                  {onDeleteUser && (
-                    <button
-                      onClick={() => onDeleteUser(user)}
-                      className={cn(
-                        "icon-button user-list-text-action user-list-delete-action",
-                        isCurrentUser
-                          ? "cursor-not-allowed text-muted-foreground/50"
-                          : "hover:bg-destructive/10 hover:text-destructive"
-                      )}
-                      disabled={isCurrentUser}
-                      aria-label={`Delete ${user.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="user-action-label">Delete</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+              className={cn("animate-fade-in", isCurrentUser && "bg-primary/5")}
+              avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{user.name.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span>}
+              primary={`${user.name}${isCurrentUser ? " (You)" : ""}`}
+              secondary={user.email}
+              tag={<span className={cn("status-pill max-w-full truncate", roleStyles[user.role].color)}>{roleStyles[user.role].label}</span>}
+              metric={<span className="truncate text-xs text-muted-foreground">{user.department}</span>}
+              date={<span className="text-xs capitalize text-muted-foreground">{user.status || "—"}</span>}
+              action={canManageUsers && <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted" aria-label={`Actions for ${user.name}`}>
+                    <MoreHorizontal className="h-[18px] w-[18px]" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onEditUser && <DropdownMenuItem onSelect={() => onEditUser(user)}><Edit className="mr-2 h-4 w-4" />Edit user</DropdownMenuItem>}
+                  {onViewAsUser && <DropdownMenuItem disabled={isCurrentUser} onSelect={() => onViewAsUser(user)}><Eye className="mr-2 h-4 w-4" />{viewingAsUserId === user.id ? "Currently viewing" : "View as user"}</DropdownMenuItem>}
+                  {onDeleteUser && <DropdownMenuItem disabled={isCurrentUser} onSelect={() => onDeleteUser(user)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete user</DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>}
+            />;
+          })}
+        </AlignedList>
         <AppTablePagination
           page={currentPage}
           pageCount={pageCount}

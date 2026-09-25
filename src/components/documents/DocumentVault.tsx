@@ -13,11 +13,14 @@ import {
   User,
   Tag,
   Grid,
-  List
+  List,
+  MoreHorizontal,
 } from 'lucide-react';
 import { LegalDocument, DocumentType, Matter } from '@/types/legal';
 import { cn } from '@/lib/utils';
 import { AppTablePagination, AppTableShell } from '@/components/ui/app-table';
+import { AlignedList, AlignedListRow } from '@/components/ui/aligned-list';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface DocumentVaultProps {
   documents: LegalDocument[];
@@ -273,71 +276,28 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
       {/* Documents List View */}
       {viewMode === 'list' && (
         <AppTableShell>
-          <div className="table-header hidden grid-cols-[minmax(0,1.8fr)_9rem_7rem_8rem_7rem_9rem] gap-3 px-4 py-3 lg:grid">
-            <span>Document</span>
-            <span>Type</span>
-            <span>Status</span>
-            <span>Modified</span>
-            <span>Size</span>
-            <span className="text-right">Actions</span>
-          </div>
-          {pagedDocuments.map((doc, index) => {
-            const Icon = typeIcons[doc.type];
-
-            return (
-              <div
+          <AlignedList>
+            {pagedDocuments.map((doc) => {
+              const Icon = typeIcons[doc.type];
+              return <AlignedListRow
                 key={doc.id}
-                className="clean-list-row animate-fade-in lg:grid-cols-[minmax(0,1.8fr)_9rem_7rem_8rem_7rem_9rem] lg:items-center"
-                style={{ animationDelay: `${index * 20}ms` }}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-lg", typeColors[doc.type])}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-extrabold text-foreground">{doc.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">Uploaded by {doc.uploadedBy} · v{doc.version}</p>
-                  </div>
-                </div>
-
-                <span className={cn("w-fit rounded-md px-2 py-1 text-xs font-semibold", typeColors[doc.type])}>
-                  {doc.type}
-                </span>
-
-                <span className={cn("status-pill w-fit", statusStyles[doc.status])}>
-                  {doc.status}
-                </span>
-
-                <span className="text-xs font-medium text-muted-foreground">
-                  {doc.lastModified.toLocaleDateString('en-NG', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </span>
-
-                <span className="text-xs font-medium text-muted-foreground">{doc.size}</span>
-
-                <div className="flex items-center gap-1 lg:justify-end">
-                  <button onClick={() => onViewDocument?.(doc)} className="icon-button" aria-label={`View ${doc.name}`}>
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  <button onClick={() => onDownloadDocument?.(doc)} className="icon-button" aria-label={`Download ${doc.name}`}>
-                    <Download className="h-4 w-4" />
-                  </button>
-                  {doc.canDelete && onDeleteDocument && (
-                    <button
-                      onClick={() => onDeleteDocument?.(doc)}
-                      className="icon-button hover:bg-destructive/10 hover:text-destructive"
-                      aria-label={`Delete ${doc.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                avatar={<span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", typeColors[doc.type])}><Icon className="h-4 w-4" /></span>}
+                primary={doc.name}
+                secondary={`${doc.type} · Uploaded by ${doc.uploadedBy} · v${doc.version}`}
+                tag={<span className={cn("status-pill max-w-full truncate", statusStyles[doc.status])}>{doc.status.replaceAll('_', ' ')}</span>}
+                metric={<span className="truncate text-xs text-muted-foreground">{doc.size}</span>}
+                date={doc.lastModified.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: '2-digit' })}
+                action={<DropdownMenu>
+                  <DropdownMenuTrigger asChild><button type="button" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted" aria-label={`Actions for ${doc.name}`}><MoreHorizontal className="h-[18px] w-[18px]" /></button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {onViewDocument && <DropdownMenuItem onSelect={() => onViewDocument(doc)}><Eye className="mr-2 h-4 w-4" />View document</DropdownMenuItem>}
+                    {onDownloadDocument && <DropdownMenuItem onSelect={() => onDownloadDocument(doc)}><Download className="mr-2 h-4 w-4" />Download</DropdownMenuItem>}
+                    {doc.canDelete && onDeleteDocument && <DropdownMenuItem onSelect={() => onDeleteDocument(doc)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete document</DropdownMenuItem>}
+                  </DropdownMenuContent>
+                </DropdownMenu>}
+              />;
+            })}
+          </AlignedList>
           <AppTablePagination
             page={currentPage}
             pageCount={pageCount}

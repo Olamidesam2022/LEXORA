@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, FileText, Scale, Users, Wallet, BriefcaseBusiness } from "lucide-react";
+import { CalendarDays, ChevronRight, FileText, Scale, Users, Wallet, BriefcaseBusiness } from "lucide-react";
 import { RecentActivity } from "./RecentActivity";
 import { Matter, AuditLog, DashboardMetrics } from "@/types/legal";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
 
 interface DashboardSummary {
   active_matter_count: number;
@@ -205,9 +206,9 @@ export function Dashboard({
               View Calendar
             </button>
           </div>
-          <div className="divide-y divide-border/70">
+          <AlignedList>
             {(summary?.upcoming_deadlines || []).length === 0 && (
-              <div className="p-8 text-center">
+              <div className="aligned-list-empty p-8 text-center">
                 <CalendarDays className="mx-auto h-8 w-8 text-muted-foreground" />
                 <p className="mt-2 text-sm font-bold text-foreground">
                   No upcoming deadlines
@@ -217,36 +218,21 @@ export function Dashboard({
                 </p>
               </div>
             )}
-            {(summary?.upcoming_deadlines || []).map((deadline) => (
-              <button
+            {(summary?.upcoming_deadlines || []).map((deadline) => {
+              const date = new Date(deadline.due_date);
+              return <AlignedListRow
                 key={deadline.id}
+                avatar={<span className="flex h-9 w-9 flex-col items-center justify-center rounded-lg bg-muted text-[10px] font-bold uppercase text-muted-foreground">{date.getDate()}</span>}
+                primary={deadline.title}
+                secondary={`Matter: ${matters.find((item) => item.id === deadline.matter_id)?.matterTitle || "Matter record"}`}
+                tag={<span className="status-pill status-active">Due soon</span>}
+                date={date.toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "2-digit" })}
+                action={<ChevronRight className="h-[18px] w-[18px] text-muted-foreground" />}
                 onClick={() => onNavigate?.("calendar")}
-                className="grid w-full gap-3 p-4 text-left transition-colors hover:bg-muted/50 sm:grid-cols-[auto_1fr_auto] sm:items-center"
-              >
-                <span className="flex h-12 w-12 flex-col items-center justify-center rounded-xl bg-muted">
-                  <span className="text-[10px] font-black uppercase text-muted-foreground">
-                    {new Date(deadline.due_date).toLocaleDateString("en-NG", {
-                      month: "short",
-                    })}
-                  </span>
-                  <span className="text-lg font-black text-foreground">
-                    {new Date(deadline.due_date).getDate()}
-                  </span>
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-black text-foreground">
-                    {deadline.title}
-                  </span>
-                  <span className="block truncate text-sm text-muted-foreground">
-                    Matter: {matters.find((item) => item.id === deadline.matter_id)?.matterTitle || "Matter record"}
-                  </span>
-                </span>
-                <span className="status-pill status-active w-fit">
-                  Due soon
-                </span>
-              </button>
-            ))}
-          </div>
+                ariaLabel={`Open deadline ${deadline.title}`}
+              />;
+            })}
+          </AlignedList>
         </div>
       </section>
 

@@ -4,16 +4,17 @@ import {
   Filter, 
   Plus, 
   ChevronDown, 
-  Calendar,
-  User,
-  MapPin,
   Eye,
   Edit,
   Trash2,
   CircleCheck,
+  BriefcaseBusiness,
+  MoreHorizontal,
 } from 'lucide-react';
 import { formatPracticeArea, Matter, ProceduralStage } from '@/types/legal';
 import { cn } from '@/lib/utils';
+import { AlignedList, AlignedListRow } from '@/components/ui/aligned-list';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface LitigationRegistryProps {
   matters: Matter[];
@@ -142,84 +143,34 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
         </div>
       )}
 
-      <div className="grid gap-3">
-        {filteredMatters.map((matterItem, index) => {
-          const isLitigation = matterItem.practiceArea === 'litigation';
-          return (
-          <div
-            key={matterItem.id}
-            className="case-modern-row animate-fade-in"
-            style={{ animationDelay: `${index * 30}ms` }}
-          >
-            <button
-              onClick={() => onViewMatter?.(matterItem)}
-              className="grid min-w-0 flex-1 gap-3 text-left md:grid-cols-[10rem_1fr_auto] md:items-center"
-            >
-              <div>
-                <p className={cn("text-sm font-semibold text-muted-foreground", isLitigation && "text-xs uppercase tracking-wide")}>
-                  {isLitigation ? matterItem.suitNumber : formatPracticeArea(matterItem.practiceArea)}
-                </p>
-                {isLitigation && <span className={`status-pill ${stageColors[matterItem.proceduralStage]} mt-2`}>
-                  {matterItem.proceduralStage}
-                </span>}
-              </div>
-
-              <div className="min-w-0">
-                  <h4 className="truncate text-base font-extrabold text-foreground">
-                  {matterItem.matterTitle}
-                </h4>
-                <p className="mt-1 truncate text-sm text-muted-foreground">
-                  {isLitigation ? `vs. ${matterItem.adversaryParty}` : matterItem.description}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-                    <User className="h-3.5 w-3.5" />
-                    {matterItem.assignedCounsel}
-                  </span>
-                  {isLitigation && <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-muted px-2.5 py-1">
-                    <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{matterItem.court}</span>
-                  </span>}
-                </div>
-              </div>
-
-              {isLitigation && <div className="flex items-center gap-2 rounded-2xl bg-background/70 p-3 md:justify-end">
-                <Calendar className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground">Next date</p>
-                  <p className="text-sm font-extrabold text-foreground">
-                    {matterItem.nextHearing.toLocaleDateString('en-NG', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-              </div>}
-            </button>
-
-            <div className="flex shrink-0 items-center gap-1 self-start md:self-center">
-              <button onClick={() => onViewMatter?.(matterItem)} className="icon-button" title="View">
-                <Eye className="h-4 w-4" />
-              </button>
-              {matterItem.canEdit && onEditMatter && (
-                <button onClick={() => onEditMatter?.(matterItem)} className="icon-button" title="Edit">
-                  <Edit className="h-4 w-4" />
-                </button>
-              )}
-              {matterItem.matterStatus === 'open' && onCloseMatter && (
-                <button onClick={() => onCloseMatter(matterItem)} className="icon-button" title="Close matter">
-                  <CircleCheck className="h-4 w-4" />
-                </button>
-              )}
-              {matterItem.canDelete && onDeleteMatter && (
-                <button onClick={() => onDeleteMatter?.(matterItem)} className="icon-button hover:bg-destructive/10 hover:text-destructive" title="Delete">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-        );})}
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <AlignedList>
+          {filteredMatters.map((matterItem) => {
+            const isLitigation = matterItem.practiceArea === 'litigation';
+            const matterStatus = matterItem.matterStatus || 'open';
+            const nextHearing = matterItem.nextHearing;
+            return <AlignedListRow
+              key={matterItem.id}
+              avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary"><BriefcaseBusiness className="h-4 w-4" /></span>}
+              primary={matterItem.matterTitle}
+              secondary={isLitigation ? `vs. ${matterItem.adversaryParty} · ${matterItem.suitNumber}` : `${formatPracticeArea(matterItem.practiceArea)} · ${matterItem.description}`}
+              tag={<span className={`status-pill ${isLitigation ? stageColors[matterItem.proceduralStage] : 'bg-muted text-muted-foreground'}`}>{isLitigation ? matterItem.proceduralStage : matterStatus}</span>}
+              metric={<span className="truncate text-xs text-muted-foreground">{matterItem.assignedCounsel}</span>}
+              date={nextHearing instanceof Date && !Number.isNaN(nextHearing.getTime()) ? nextHearing.toLocaleDateString('en-NG', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+              action={<DropdownMenu>
+                <DropdownMenuTrigger asChild><button type="button" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted" aria-label={`Actions for ${matterItem.matterTitle}`}><MoreHorizontal className="h-[18px] w-[18px]" /></button></DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {onViewMatter && <DropdownMenuItem onSelect={() => onViewMatter(matterItem)}><Eye className="mr-2 h-4 w-4" />View matter</DropdownMenuItem>}
+                  {matterItem.canEdit && onEditMatter && <DropdownMenuItem onSelect={() => onEditMatter(matterItem)}><Edit className="mr-2 h-4 w-4" />Edit matter</DropdownMenuItem>}
+                  {matterStatus === 'open' && onCloseMatter && <DropdownMenuItem onSelect={() => onCloseMatter(matterItem)}><CircleCheck className="mr-2 h-4 w-4" />Close matter</DropdownMenuItem>}
+                  {matterItem.canDelete && onDeleteMatter && <DropdownMenuItem onSelect={() => onDeleteMatter(matterItem)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete matter</DropdownMenuItem>}
+                </DropdownMenuContent>
+              </DropdownMenu>}
+              onClick={onViewMatter ? () => onViewMatter(matterItem) : undefined}
+              ariaLabel={`Open matter ${matterItem.matterTitle}`}
+            />;
+          })}
+        </AlignedList>
       </div>
 
       {/* Empty State */}

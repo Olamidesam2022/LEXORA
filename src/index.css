@@ -327,7 +327,111 @@
   }
 
   .clean-list-row {
-    @apply grid w-full gap-3 border-b border-border/70 px-3 py-3 text-left transition-all duration-200 last:border-b-0 hover:bg-muted/50 sm:px-4;
+    @apply flex w-full flex-col gap-3 border-b border-border/70 px-3 py-3 text-left transition-all duration-200 last:border-b-0 hover:bg-muted/50 sm:px-4;
+  }
+
+  .aligned-list {
+    display: grid;
+    grid-template-columns: 36px 1fr 112px 96px 88px 18px;
+    column-gap: 16px;
+    padding-inline: 20px;
+    align-items: center;
+  }
+
+  .aligned-list-row {
+    display: contents;
+  }
+
+  .aligned-list-cell {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    padding-block: 14px;
+    border-bottom: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  .aligned-list-row:last-child .aligned-list-cell {
+    border-bottom: 0;
+  }
+
+  .aligned-list-empty {
+    grid-column: 1 / -1;
+  }
+
+  .aligned-list-row-selectable {
+    cursor: pointer;
+  }
+
+  .aligned-list-row-selectable:hover .aligned-list-cell {
+    background-color: hsl(var(--muted) / 0.5);
+  }
+
+  .aligned-list-row-selectable:focus-visible .aligned-list-cell {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: -2px;
+  }
+
+  .aligned-list-avatar,
+  .aligned-list-action {
+    justify-content: center;
+  }
+
+  .aligned-list-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .aligned-list-primary,
+  .aligned-list-secondary {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .aligned-list-primary {
+    color: hsl(var(--foreground));
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .aligned-list-secondary {
+    color: hsl(var(--muted-foreground));
+    font-size: 0.75rem;
+  }
+
+  .aligned-list-tag {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .aligned-list-metric,
+  .aligned-list-date {
+    justify-content: flex-end;
+    overflow: hidden;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .aligned-list {
+      grid-template-columns: 36px 1fr 18px;
+      row-gap: 0;
+      padding-inline: 20px;
+    }
+
+    .aligned-list-tag,
+    .aligned-list-metric,
+    .aligned-list-date {
+      display: none;
+    }
+
+    .aligned-list-copy {
+      gap: 8px;
+    }
   }
 
   .user-list-secondary {

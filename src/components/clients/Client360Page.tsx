@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, FileText, ReceiptText, Search, Wallet } from "lucide-react";
+import { BriefcaseBusiness, ChevronRight, FileText, ReceiptText, Search, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfiles } from "@/hooks/useProfiles";
+import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatPracticeArea } from "@/types/legal";
 
-type ClientRow = { id: string; display_name: string; legal_name?: string | null; email?: string | null; phone?: string | null; address?: string | null; notes?: string | null; client_type: string };
+type ClientRow = { id: string; display_name: string; legal_name?: string | null; email?: string | null; phone?: string | null; address?: string | null; notes?: string | null; client_type: string; assigned_to?: string | null; created_at?: string };
 type ClientRecord = {
   client: ClientRow;
   matters: Array<{ id: string; title: string; description: string | null; practice_area: string; matter_status: string; closed_at: string | null; created_at: string; assigned_to: string | null }>;
@@ -21,15 +23,19 @@ type ClientRecord = {
 };
 
 export function Client360Page({ initialClientId }: { initialClientId?: string | null }) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const { users: profiles } = useProfiles();
   const [query, setQuery] = useState("");
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [record, setRecord] = useState<ClientRecord | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingClients, setLoadingClients] = useState(false);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [editingClient, setEditingClient] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientLegalName, setNewClientLegalName] = useState("");
+  const [newClientType, setNewClientType] = useState("organization");
 
   async function api(path: string) {
     const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
@@ -41,14 +47,17 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
 
   useEffect(() => {
     let alive = true;
-    if (query.trim().length < 2) { setClients([]); return; }
+    if (!user) { setClients([]); return; }
+    setLoadingClients(true);
+    const search = query.trim();
     const timer = window.setTimeout(() => {
-      api(`/api/clients?search=${encodeURIComponent(query.trim())}`)
+      api(`/api/clients${search ? `?search=${encodeURIComponent(search)}` : ""}`)
         .then((payload) => { if (alive) setClients(payload.clients || []); })
-        .catch((reason: Error) => { if (alive) setError(reason.message); });
-    }, 180);
+        .catch((reason: Error) => { if (alive) setError(reason.message); })
+        .finally(() => { if (alive) setLoadingClients(false); });
+    }, search ? 180 : 0);
     return () => { alive = false; window.clearTimeout(timer); };
-  }, [query]);
+  }, [query, user?.id]);
 
   useEffect(() => {
     if (!initialClientId || !user) return;
@@ -60,10 +69,52 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
   }, [initialClientId, user?.id]);
 
   const selectClient = async (client: ClientRow) => {
-    setError(""); setLoading(true); setClients([]); setQuery(client.display_name);
+    setError(""); setLoading(true);
     try { setRecord(await api(`/api/clients/${client.id}/360`)); }
     catch (reason) { setError((reason as Error).message); }
     finally { setLoading(false); }
+  };
+
+  const assignClient = async (assignedTo: string | null) => {
+    if (!record) return;
+    setError("");
+    try {
+      const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      const response = await fetch(`/api/clients/${record.client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
+        body: JSON.stringify({ assigned_to: assignedTo }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not assign this client");
+      setRecord((current) => current ? { ...current, client: payload.client } : current);
+      setClients((current) => current.map((client) => client.id === payload.client.id ? { ...client, ...payload.client } : client));
+    } catch (reason) {
+      setError((reason as Error).message);
+    }
+  };
+
+  const updateClientDetails = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!record) return;
+    setError("");
+    const form = new FormData(event.currentTarget);
+    const values = Object.fromEntries(form.entries());
+    try {
+      const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
+      const response = await fetch(`/api/clients/${record.client.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
+        body: JSON.stringify(values),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not update this client");
+      setRecord((current) => current ? { ...current, client: payload.client } : current);
+      setClients((current) => current.map((client) => client.id === payload.client.id ? { ...client, ...payload.client } : client));
+      setEditingClient(false);
+    } catch (reason) {
+      setError((reason as Error).message);
+    }
   };
 
   const createClient = async (event: React.FormEvent) => {
@@ -73,13 +124,14 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
       const response = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
-        body: JSON.stringify({ display_name: newClientName, legal_name: newClientLegalName || null }),
+        body: JSON.stringify({ display_name: newClientName, legal_name: newClientLegalName || null, client_type: newClientType }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Could not create client");
-      setShowCreate(false); setQuery(payload.client.display_name); setClients([]);
-      setRecord(await api(`/api/clients/${payload.client.id}/360`));
-      setNewClientName(""); setNewClientLegalName("");
+      setShowCreate(false); setQuery(""); setRecord(null);
+      setNewClientName(""); setNewClientLegalName(""); setNewClientType("organization");
+      const listPayload = await api("/api/clients");
+      setClients(listPayload.clients || []);
     } catch (reason) { setError((reason as Error).message); }
     finally { setLoading(false); }
   };
@@ -88,29 +140,77 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
     <header>
       <h1 className="text-2xl font-semibold text-foreground">Client 360</h1>
     </header>
-    <div className="relative max-w-2xl">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client name, legal name, or email" className="h-12 pl-10" />
-      {clients.length > 0 && <div className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-xl border border-border bg-card shadow-lg">
-        {clients.map((client) => <button key={client.id} onClick={() => void selectClient(client)} className="flex w-full flex-col border-b border-border px-4 py-3 text-left last:border-0 hover:bg-muted">
-          <span className="font-semibold">{client.display_name}</span><span className="text-xs text-muted-foreground">{client.legal_name || client.email || client.client_type}</span>
-        </button>)}
-      </div>}
-    </div>
-    <button onClick={() => setShowCreate((value) => !value)} className="text-sm font-semibold text-primary hover:underline">{showCreate ? "Cancel new client" : "+ Add client"}</button>
-    {showCreate && <form onSubmit={createClient} className="grid max-w-2xl gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-[1fr_1fr_auto]">
-      <Input required value={newClientName} onChange={(event) => setNewClientName(event.target.value)} placeholder="Client display name" />
-      <Input value={newClientLegalName} onChange={(event) => setNewClientLegalName(event.target.value)} placeholder="Registered legal name" />
-      <button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Create client</button>
+    {!record && <>
+      <div className="relative w-full">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search client name, legal name, or email" className="h-12 pl-10" />
+      </div>
+      <section className="w-full overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-5 py-3">
+          <h2 className="font-semibold">Clients</h2><span className="text-sm text-muted-foreground">{clients.length} shown</span>
+        </div>
+        {loadingClients ? <p className="px-5 py-6 text-sm text-muted-foreground">Loading clients…</p> : clients.length ? <AlignedList>
+          {clients.map((client) => <AlignedListRow
+            key={client.id}
+            avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary">{client.display_name.slice(0, 2)}</span>}
+            primary={client.display_name}
+            secondary={client.legal_name || client.email || client.client_type}
+            tag={<Badge variant="outline" className="max-w-full truncate">{client.client_type}</Badge>}
+            metric="—"
+            date={client.created_at ? new Date(client.created_at).toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
+            action={<ChevronRight className="h-4 w-[18px] text-muted-foreground" />}
+            onClick={() => void selectClient(client)}
+            ariaLabel={`Open client ${client.display_name}`}
+          />)}
+        </AlignedList> : <p className="px-5 py-6 text-sm text-muted-foreground">{query ? "No matching clients found." : "No clients yet."}</p>}
+      </section>
+    </>}
+    {role !== "legal_officer" && <button onClick={() => setShowCreate((value) => !value)} className="text-sm font-semibold text-primary hover:underline">{showCreate ? "Cancel new client" : "+ Add client"}</button>}
+    {showCreate && role !== "legal_officer" && <form onSubmit={createClient} className="grid w-full gap-4 rounded-xl border border-border bg-card p-5 sm:grid-cols-2 xl:grid-cols-4">
+      <label className="grid gap-2 text-sm font-semibold text-foreground">Client name
+        <Input required value={newClientName} onChange={(event) => setNewClientName(event.target.value)} placeholder="Client display name" />
+      </label>
+      <label className="grid gap-2 text-sm font-semibold text-foreground">Registered legal name
+        <Input value={newClientLegalName} onChange={(event) => setNewClientLegalName(event.target.value)} placeholder="Optional legal name" />
+      </label>
+      <label className="grid gap-2 text-sm font-semibold text-foreground">Client type
+        <select value={newClientType} onChange={(event) => setNewClientType(event.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm font-normal">
+          <option value="organization">Organization</option>
+          <option value="individual">Individual</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <button className="h-10 self-end rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Create client</button>
     </form>}
     {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
     {loading && <p className="text-sm text-muted-foreground">Loading client record…</p>}
     {record && <>
+      <button type="button" onClick={() => { setRecord(null); setEditingClient(false); setError(""); }} className="text-sm font-semibold text-primary hover:underline">← Back to clients</button>
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0"><h2 className="text-2xl font-semibold">{record.client.display_name}</h2><p className="mt-1 text-sm text-muted-foreground">{record.client.legal_name || record.client.client_type}</p>{record.client.notes && <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{record.client.notes}</p>}</div>
-          <div className="text-sm text-muted-foreground">{record.client.email}<br />{record.client.phone}{record.client.address && <><br />{record.client.address}</>}</div>
+          <div className="min-w-0"><h2 className="text-2xl font-semibold">{record.client.display_name}</h2><p className="mt-1 text-sm text-muted-foreground">{record.client.legal_name || record.client.client_type}</p>{record.client.notes && <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{record.client.notes}</p>}
+            {(role === "operations_manager" || role === "managing_partner") && <label className="mt-4 flex flex-wrap items-center gap-2 text-sm font-medium">Assigned Legal Officer
+              <select value={record.client.assigned_to || ""} onChange={(event) => void assignClient(event.target.value || null)} className="h-9 rounded-md border border-border bg-background px-3 text-sm">
+                <option value="">Unassigned</option>
+                {profiles.filter((profile) => profile.role === "legal_officer" && profile.status === "approved").map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
+              </select>
+            </label>}
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="text-sm text-muted-foreground">{record.client.email}<br />{record.client.phone}{record.client.address && <><br />{record.client.address}</>}</div>
+            {(role === "operations_manager" || role === "managing_partner" || record.client.assigned_to === user?.id) && <button type="button" onClick={() => setEditingClient((value) => !value)} className="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">{editingClient ? "Cancel" : "Edit client"}</button>}
+          </div>
         </div>
+        {editingClient && <form onSubmit={updateClientDetails} className="mt-6 grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
+          <Input required name="display_name" defaultValue={record.client.display_name} placeholder="Client display name" />
+          <Input name="legal_name" defaultValue={record.client.legal_name || ""} placeholder="Registered legal name" />
+          <Input name="email" type="email" defaultValue={record.client.email || ""} placeholder="Email" />
+          <Input name="phone" defaultValue={record.client.phone || ""} placeholder="Phone" />
+          <Input name="address" defaultValue={record.client.address || ""} placeholder="Address" />
+          <select name="client_type" defaultValue={record.client.client_type} className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="organization">Organization</option><option value="individual">Individual</option><option value="other">Other</option></select>
+          <textarea name="notes" defaultValue={record.client.notes || ""} placeholder="Client notes" className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm sm:col-span-2" />
+          <div className="flex gap-2 sm:col-span-2"><button className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Save changes</button><button type="button" onClick={() => setEditingClient(false)} className="rounded-md border border-border px-4 py-2 text-sm font-semibold">Cancel</button></div>
+        </form>}
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat icon={BriefcaseBusiness} label="Active matters" value={String(record.summary.active_matter_count)} />
@@ -150,10 +250,10 @@ function Stat({ icon: Icon, label, value }: { icon: typeof BriefcaseBusiness; la
   return <div className="rounded-xl border border-border bg-card p-4 shadow-sm"><div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Icon className="h-4 w-4 text-primary" />{label}</div><p className="mt-3 text-2xl font-semibold text-foreground">{value}</p></div>;
 }
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="rounded-xl border border-border bg-card p-4 shadow-sm"><h3 className="mb-2 text-lg font-semibold">{title}</h3>{children}</section>;
+  return <section className="rounded-xl border border-border bg-card p-4 shadow-sm"><h3 className="mb-2 text-lg font-semibold">{title}</h3><AlignedList>{children}</AlignedList></section>;
 }
 function Row({ title, detail, children }: { title: string; detail: string; children?: React.ReactNode }) {
-  return <div className="flex items-start justify-between gap-3 border-t border-border py-3 first:border-0"><div className="min-w-0"><p className="break-words text-sm font-medium">{title}</p><p className="mt-1 whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">{detail}</p></div>{children}</div>;
+  return <AlignedListRow avatar={<span className="h-9 w-9 rounded-full bg-primary/10" />} primary={title} secondary={detail} tag={children} />;
 }
-function Empty() { return <p className="border-t border-border py-4 text-sm text-muted-foreground">Nothing recorded yet.</p>; }
+function Empty() { return <p className="aligned-list-empty py-4 text-sm text-muted-foreground">Nothing recorded yet.</p>; }
 function clientMatterTitle(record: ClientRecord, matterId: string) { return record.matters.find((matter) => matter.id === matterId)?.title || "Matter"; }
