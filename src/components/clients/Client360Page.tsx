@@ -149,7 +149,7 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <h2 className="font-semibold">Clients</h2><span className="text-sm text-muted-foreground">{clients.length} shown</span>
         </div>
-        {loadingClients ? <p className="px-5 py-6 text-sm text-muted-foreground">Loading clients…</p> : clients.length ? <AlignedList>
+        {loadingClients ? <p className="px-5 py-6 text-sm text-muted-foreground">Loading clients…</p> : clients.length ? <AlignedList className="client-directory-list">
           {clients.map((client) => <AlignedListRow
             key={client.id}
             avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-xs font-bold uppercase text-primary">{client.display_name.slice(0, 2)}</span>}
@@ -161,6 +161,7 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
             action={<ChevronRight className="h-4 w-[18px] text-muted-foreground" />}
             onClick={() => void selectClient(client)}
             ariaLabel={`Open client ${client.display_name}`}
+            disableHover
           />)}
         </AlignedList> : <p className="px-5 py-6 text-sm text-muted-foreground">{query ? "No matching clients found." : "No clients yet."}</p>}
       </section>

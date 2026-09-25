@@ -17,6 +17,7 @@ interface AlignedListRowProps {
   className?: string;
   onClick?: () => void;
   ariaLabel?: string;
+  disableHover?: boolean;
 }
 
 export function AlignedList({ children, className }: AlignedListProps) {
@@ -34,6 +35,7 @@ export function AlignedListRow({
   className,
   onClick,
   ariaLabel,
+  disableHover = false,
 }: AlignedListRowProps) {
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!onClick || (event.key !== "Enter" && event.key !== " ")) return;
@@ -48,7 +50,7 @@ export function AlignedListRow({
 
   return (
     <div
-      className={cn("aligned-list-row", onClick && "aligned-list-row-selectable", className)}
+      className={cn("aligned-list-row", onClick && "aligned-list-row-selectable", disableHover && "aligned-list-row-no-hover", className)}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       aria-label={ariaLabel}
