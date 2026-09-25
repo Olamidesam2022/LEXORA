@@ -695,8 +695,8 @@
   .landing-header .landing-container > a > span > svg { width: 35px; height: 35px; }
   .landing-header a > span > span:first-child { font-size: 13px; }
   .landing-header a > span > span:last-child { font-size: 8px; }
-  .landing-login-link { flex: 0 0 auto; gap: 6px; padding: 9px 13px; font-size: 12px; white-space: nowrap; }
-  .landing-login-link > svg { width: 16px; height: 16px; }
+  .landing-login-link { width: 122px; height: 46px; min-height: 46px; flex: 0 0 122px; justify-content: center; gap: 8px; padding: 0 14px; font-size: 14px; white-space: nowrap; }
+  .landing-login-link > svg { width: 14px; height: 14px; }
   .landing-request-access { display: none; }
   .landing-hero-grid { padding-top: 60px; }
   .landing-hero-copy h1 { font-size: 48px; }
