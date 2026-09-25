@@ -90,7 +90,7 @@ export function UserManagement({
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">
-                {users.filter(u => u.role === 'operations_manager').length}
+                {users.filter(u => u.role === 'operations_manager' || u.role === 'managing_partner').length}
               </p>
               <p className="text-sm text-muted-foreground">Administrators</p>
             </div>
@@ -163,9 +163,9 @@ export function UserManagement({
               avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{user.name.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span>}
               primary={`${user.name}${isCurrentUser ? " (You)" : ""}`}
               secondary={user.email}
-              tag={<span className={cn("status-pill max-w-full truncate", roleStyles[user.role].color)}>{roleStyles[user.role].label}</span>}
-              metric={<span className="truncate text-xs text-muted-foreground">{user.department}</span>}
-              date={<span className="text-xs capitalize text-muted-foreground">{user.status || "—"}</span>}
+              tag={<span title={roleStyles[user.role].label} className={cn("status-pill max-w-full truncate px-1.5 text-[0.68rem]", roleStyles[user.role].color)}>{roleStyles[user.role].label}</span>}
+              metric={<span className="truncate text-xs text-muted-foreground">{user.assignedClientCount || 0} client{user.assignedClientCount === 1 ? "" : "s"}</span>}
+              date={<span className="text-xs text-muted-foreground">{user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}</span>}
               action={canManageUsers && <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-muted" aria-label={`Actions for ${user.name}`}>

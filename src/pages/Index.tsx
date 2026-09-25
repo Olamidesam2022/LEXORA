@@ -513,7 +513,7 @@ const Index = () => {
   };
 
   const canManageMatters =
-    !isViewingAs && (role === "operations_manager" || role === "managing_partner");
+    !isViewingAs && (role === "legal_officer" || role === "operations_manager" || role === "managing_partner");
   const canAssignMatters = !isViewingAs && role === "operations_manager";
   const displayMatters = matters;
   const activeMatters = useMemo(

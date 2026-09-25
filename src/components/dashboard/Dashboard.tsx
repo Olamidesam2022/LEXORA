@@ -107,7 +107,7 @@ export function Dashboard({
               "Matters",
               "Documents",
               "Calendar",
-              ...(!isViewingAs && (role === "managing_partner" || role === "operations_manager")
+              ...(!isViewingAs && role === "managing_partner"
                 ? ["Users"]
                 : []),
             ].map((item) => (

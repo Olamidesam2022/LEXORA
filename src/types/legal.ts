@@ -157,6 +157,8 @@ export interface User {
   status?: "pending" | "approved" | "rejected";
   department: string;
   avatar?: string;
+  createdAt?: string;
+  assignedClientCount?: number;
 }
 
 export interface DashboardMetrics {

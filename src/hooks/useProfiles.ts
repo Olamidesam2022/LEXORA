@@ -12,13 +12,19 @@ interface ProfileRow {
   created_at: string;
 }
 
-const toUser = (profile: ProfileRow): User => ({
+interface ClientAssignmentRow {
+  assigned_to: string | null;
+}
+
+const toUser = (profile: ProfileRow, clientCount: number): User => ({
   id: profile.id,
   name: profile.full_name || profile.email,
   email: profile.email,
   role: profile.role,
   status: profile.status,
   department: "Legal",
+  createdAt: profile.created_at,
+  assignedClientCount: clientCount,
 });
 
 export function useProfiles() {
@@ -46,21 +52,39 @@ export function useProfiles() {
       query = query.eq("status", "approved");
     }
 
-    const { data, error } = await query;
+    const [{ data, error }, { data: clientAssignments, error: clientError }] = await Promise.all([
+      query,
+      supabase.from("clients").select("assigned_to").is("deleted_at", null),
+    ]);
 
     if (error) {
       setError(error.message);
       setIsLoading(false);
       throw error;
     }
+    if (clientError) {
+      setError(clientError.message);
+      setIsLoading(false);
+      throw clientError;
+    }
 
     const rows = (data || []) as ProfileRow[];
+    const assignedClientCounts = new Map<string, number>();
+    ((clientAssignments || []) as ClientAssignmentRow[]).forEach((client) => {
+      if (client.assigned_to) assignedClientCounts.set(client.assigned_to, (assignedClientCounts.get(client.assigned_to) || 0) + 1);
+    });
     const visibleRows =
       role === "operations_manager"
         ? rows.filter((profile) => profile.role === "legal_officer")
         : rows;
 
-    setUsers(visibleRows.map(toUser));
+    const totalClientCount = (clientAssignments || []).length;
+    setUsers(visibleRows.map((profile) => toUser(
+      profile,
+      profile.role === "operations_manager" || profile.role === "managing_partner"
+        ? totalClientCount
+        : assignedClientCounts.get(profile.id) || 0,
+    )));
     setIsLoading(false);
   }, [role]);
 
