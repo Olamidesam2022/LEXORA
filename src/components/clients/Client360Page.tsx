@@ -137,9 +137,9 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
   };
 
   return <section className="space-y-6">
-    <header>
+    {/* <header>
       <h1 className="text-2xl font-semibold text-foreground">Client 360</h1>
-    </header>
+    </header> */}
     {!record && <>
       <div className="relative w-full">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

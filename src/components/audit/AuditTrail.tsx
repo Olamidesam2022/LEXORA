@@ -127,9 +127,9 @@ export function AuditTrail({ logs }: AuditTrailProps) {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">
+          {/* <p className="text-sm font-medium text-muted-foreground">
             NDPR 2019 compliant activity logging
-          </p>
+          </p> */}
         </div>
         <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
           <Shield className="h-4 w-4" />
