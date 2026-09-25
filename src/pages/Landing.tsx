@@ -48,11 +48,7 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
-            {/* <Link to="/signup" className="landing-request-access" aria-label="Request access">
-              <span className="hidden sm:inline">Request access</span>
-              <span className="sm:hidden">Access</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </Link> */}
+            
             <Link to="/login" className="landing-login-link">Sign in <ArrowUpRight className="h-4 w-4" /></Link>
           </div>
         </div>
