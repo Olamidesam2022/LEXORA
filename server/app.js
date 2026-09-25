@@ -78,6 +78,7 @@ app.get("/api/clients", async (req, res) => {
   const search = String(req.query.search || "").trim();
   let query = req.db.from("clients").select("id,display_name,legal_name,email,phone,client_type,created_at,assigned_to")
     .is("deleted_at", null).order("display_name");
+  if (req.profile.role === "legal_officer") query = query.eq("assigned_to", req.profile.id);
   if (search) {
     const safeSearch = search.replace(/[%,_()]/g, " ").trim();
     if (safeSearch) query = query.or(`display_name.ilike.%${safeSearch}%,legal_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
