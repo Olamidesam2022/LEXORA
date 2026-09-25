@@ -692,11 +692,12 @@
 @media (max-width: 540px) {
   .landing-container { width: calc(100% - 32px); }
   .landing-header .landing-container { height: 66px; }
-  .landing-header a > svg { width: 35px; height: 35px; }
+  .landing-header .landing-container > a > span > svg { width: 35px; height: 35px; }
   .landing-header a > span > span:first-child { font-size: 13px; }
   .landing-header a > span > span:last-child { font-size: 8px; }
-  .landing-login-link { padding: 10px 13px; font-size: 11px; }
-  .landing-request-access { gap: 3px; padding: 9px 10px; font-size: 11px; }
+  .landing-login-link { flex: 0 0 auto; gap: 6px; padding: 9px 13px; font-size: 12px; white-space: nowrap; }
+  .landing-login-link > svg { width: 16px; height: 16px; }
+  .landing-request-access { display: none; }
   .landing-hero-grid { padding-top: 60px; }
   .landing-hero-copy h1 { font-size: 48px; }
   .landing-lede { font-size: 14px; }
