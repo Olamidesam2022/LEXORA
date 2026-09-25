@@ -17,20 +17,22 @@ const managerRoles = new Set(["operations_manager", "managing_partner"]);
 const jsonError = (res, status, message) => res.status(status).json({ error: message });
 
 async function authenticate(req, res, next) {
-  if (!supabaseAdmin || !anonKey) return jsonError(res, 500, "LEXORA API credentials are not configured");
+  if (!supabaseUrl || !anonKey) return jsonError(res, 500, "LEXORA API credentials are not configured");
   const token = req.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
   if (!token) return jsonError(res, 401, "A Supabase access token is required");
-  const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+  const userDb = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: authData, error: authError } = await userDb.auth.getUser(token);
   if (authError || !authData.user) return jsonError(res, 401, "The access token is invalid or expired");
-  const { data: profile, error: profileError } = await supabaseAdmin
+  const { data: profile, error: profileError } = await userDb
     .from("profiles").select("id,role,status,full_name,email").eq("id", authData.user.id).maybeSingle();
   if (profileError) return jsonError(res, 500, profileError.message);
   if (!profile || profile.status !== "approved" || !allowedRoles.has(profile.role)) return jsonError(res, 403, "An approved LEXORA profile is required");
   req.profile = profile;
-  req.db = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  req.db = userDb;
+  req.adminDb = supabaseAdmin;
   next();
 }
 
@@ -261,7 +263,8 @@ app.post("/api/documents/:documentId/versions", async (req, res) => {
     if (isClosedMatter && !["operations_manager", "managing_partner"].includes(req.profile.role)) return jsonError(res, 409, "Only a reviewer may append a version to a closed matter");
     if (!isClosedMatter && document.status !== "draft") return jsonError(res, 409, "Only draft documents may be revised before approval");
   }
-  const { data: blob, error: downloadError } = await supabaseAdmin.storage.from("lexora-documents").download(storage_path);
+  const storageClient = supabaseAdmin || req.db;
+  const { data: blob, error: downloadError } = await storageClient.storage.from("lexora-documents").download(storage_path);
   if (downloadError || !blob) return jsonError(res, 400, downloadError?.message || "Unable to read uploaded object");
   const buffer = Buffer.from(await blob.arrayBuffer());
   const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
@@ -347,7 +350,8 @@ app.get("/api/clients/:clientId/export", requireRoles("managing_partner"), async
   if (bundleError) return jsonError(res, 501, "Client export query is not installed yet");
   const documentFiles = await Promise.all((bundle.documents || []).map(async (document) => {
     if (!document.storage_path) return { document_id: document.id, storage_path: null, file_base64: null };
-    const { data: blob, error: fileError } = await supabaseAdmin.storage.from("lexora-documents").download(document.storage_path);
+    const storageClient = supabaseAdmin || req.db;
+    const { data: blob, error: fileError } = await storageClient.storage.from("lexora-documents").download(document.storage_path);
     if (fileError || !blob) throw new Error(`Could not export document ${document.id}: ${fileError?.message || "object unavailable"}`);
     return { document_id: document.id, storage_path: document.storage_path, file_base64: Buffer.from(await blob.arrayBuffer()).toString("base64") };
   }));
@@ -362,7 +366,7 @@ app.patch("/api/admin/users/:userId", requireRoles("managing_partner"), async (r
   const updates = Object.fromEntries(Object.entries(req.body || {}).filter(([key]) => allowed.includes(key)));
   const validRoles = [...allowedRoles];
   if (updates.role && !validRoles.includes(updates.role)) return jsonError(res, 400, "Invalid role");
-  const { data, error } = await supabaseAdmin.from("profiles").update(updates).eq("id", req.params.userId).select().maybeSingle();
+  const { data, error } = await (req.adminDb || req.db).from("profiles").update(updates).eq("id", req.params.userId).select().maybeSingle();
   if (error) return jsonError(res, 400, error.message);
   if (!data) return jsonError(res, 404, "Profile not found");
   return res.json({ user: data });
