@@ -4,6 +4,7 @@ import { DocumentType, DocumentWorkflowStatus, LegalDocument } from "@/types/leg
 import { useAuth } from "@/context/AuthContext";
 import { useViewAs } from "@/context/ViewAsContext";
 import { writeAuditLog } from "@/lib/audit";
+import { apiFetch } from "@/lib/api-fetch";
 
 const DOCUMENT_BUCKET = "lexora-documents";
 const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024;
@@ -252,12 +253,10 @@ export function useDocuments() {
         if (cleanupError) console.error("Failed to clean up incomplete document upload:", cleanupError);
         throw uploadError;
       }
-      const { data: session } = await supabase.auth.getSession();
-      const versionResponse = await fetch(`/api/documents/${data.id}/versions`, {
+      const versionResponse = await apiFetch(`/api/documents/${data.id}/versions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.session?.access_token || ""}`,
         },
         body: JSON.stringify({ storage_path: storagePath, mime_type: mimeType }),
       });
@@ -328,10 +327,8 @@ export function useDocuments() {
     async (document: LegalDocument) => {
       if (!user) throw new Error("You must be logged in.");
       if (role !== "managing_partner") throw new Error("Only Managing Partner may soft-delete a document.");
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch(`/api/documents/${document.id}/soft-delete`, {
+      const response = await apiFetch(`/api/documents/${document.id}/soft-delete`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));

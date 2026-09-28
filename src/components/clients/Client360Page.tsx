@@ -6,6 +6,7 @@ import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatPracticeArea } from "@/types/legal";
+import { apiFetch } from "@/lib/api-fetch";
 
 type ClientRow = { id: string; display_name: string; legal_name?: string | null; email?: string | null; phone?: string | null; address?: string | null; notes?: string | null; client_type: string; assigned_to?: string | null; created_at?: string };
 type ClientRecord = {
@@ -38,8 +39,7 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
   const [newClientType, setNewClientType] = useState("organization");
 
   async function api(path: string) {
-    const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
-    const response = await fetch(path, { headers: { Authorization: `Bearer ${data.session?.access_token || ""}` } });
+    const response = await apiFetch(path);
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Request failed");
     return payload;
@@ -79,10 +79,9 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
     if (!record) return;
     setError("");
     try {
-      const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
-      const response = await fetch(`/api/clients/${record.client.id}`, {
+      const response = await apiFetch(`/api/clients/${record.client.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assigned_to: assignedTo }),
       });
       const payload = await response.json();
@@ -101,10 +100,9 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
     const form = new FormData(event.currentTarget);
     const values = Object.fromEntries(form.entries());
     try {
-      const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
-      const response = await fetch(`/api/clients/${record.client.id}`, {
+      const response = await apiFetch(`/api/clients/${record.client.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
       const payload = await response.json();
@@ -120,10 +118,9 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
   const createClient = async (event: React.FormEvent) => {
     event.preventDefault(); setError(""); setLoading(true);
     try {
-      const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
-      const response = await fetch("/api/clients", {
+      const response = await apiFetch("/api/clients", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ display_name: newClientName, legal_name: newClientLegalName || null, client_type: newClientType }),
       });
       const payload = await response.json();

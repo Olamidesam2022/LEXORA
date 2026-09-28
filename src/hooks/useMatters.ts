@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useViewAs } from "@/context/ViewAsContext";
 import { writeAuditLog } from "@/lib/audit";
 import { MATTERS_REFRESH_EVENT } from "@/lib/matter-events";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface MatterRow {
   id: string;
@@ -380,10 +381,8 @@ export function useMatters() {
         throw new Error("You are not authorized to archive this matter.");
       }
 
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch(`/api/matters/${matterItem.id}/soft-delete`, {
+      const response = await apiFetch(`/api/matters/${matterItem.id}/soft-delete`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
@@ -405,10 +404,8 @@ export function useMatters() {
     if (!user || !["operations_manager", "managing_partner"].includes(role || "")) {
       throw new Error("Only Operations Managers and Managing Partners can close matters.");
     }
-    const { data: session } = await supabase.auth.getSession();
-    const response = await fetch(`/api/matters/${matter.id}/close`, {
+    const response = await apiFetch(`/api/matters/${matter.id}/close`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.error || "Failed to close matter.");

@@ -53,6 +53,7 @@ import { Loader2, Shield, X } from "lucide-react";
 import { useMatterProgressModal } from "@/hooks/useMatterProgressModal";
 import { Client360Page } from "@/components/clients/Client360Page";
 import { BillingPage } from "@/components/billing/BillingPage";
+import { apiFetch } from "@/lib/api-fetch";
 
 const viewTitles: Record<string, string> = {
   dashboard: "Dashboard",
@@ -125,9 +126,7 @@ const Index = () => {
   useEffect(() => {
     let active = true;
     if (!user) return;
-    supabase.auth.getSession().then(({ data }) => fetch(`/api/clients?search=`, {
-      headers: { Authorization: `Bearer ${data.session?.access_token || ""}` },
-    })).then(async (response) => {
+    apiFetch(`/api/clients?search=`).then(async (response) => {
       if (!response.ok) return;
       const payload = await response.json();
       if (active) setClientOptions(payload.clients || []);
@@ -582,10 +581,7 @@ const Index = () => {
     const query = globalSearchQuery.trim();
     if (query.length < 2) { setClientSearchResults([]); return; }
     const timer = window.setTimeout(async () => {
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch(`/api/clients?search=${encodeURIComponent(query)}`, {
-        headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
-      });
+      const response = await apiFetch(`/api/clients?search=${encodeURIComponent(query)}`);
       if (!response.ok) return;
       const payload = await response.json();
       if (active) setClientSearchResults(payload.clients || []);

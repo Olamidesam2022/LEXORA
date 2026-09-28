@@ -41,6 +41,7 @@ import { StatusProgressBar } from "@/components/matters/StatusProgressBar";
 import { formatPracticeArea, MatterNote, MatterTask, MatterTaskPriority, MatterTaskStatus } from "@/types/legal";
 import { writeAuditLog } from "@/lib/audit";
 import { refreshMatters } from "@/lib/matter-events";
+import { apiFetch } from "@/lib/api-fetch";
 
 interface MatterProgressModalProps {
   matterId: string;
@@ -762,10 +763,8 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
     setIsSavingProgress(true);
     setActionError(null);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const response = await fetch(`/api/matters/${matterId}/close`, {
+      const response = await apiFetch(`/api/matters/${matterId}/close`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Failed to close matter.");

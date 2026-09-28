@@ -7,7 +7,7 @@ import { useViewAs } from "@/contexts/ViewAsContext";
 import { usePendingApprovals } from "@/hooks/usePendingApprovals";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api-fetch";
 import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
 
 interface DashboardSummary {
@@ -65,13 +65,12 @@ export function Dashboard({
   useEffect(() => {
     if (!user) return;
     let active = true;
-    supabase.auth.getSession().then(async ({ data }) => {
-      const response = await fetch("/api/dashboard/summary", { headers: { Authorization: `Bearer ${data.session?.access_token || ""}` } });
+    apiFetch("/api/dashboard/summary").then(async (response) => {
       if (!response.ok) return;
       const result = await response.json();
       if (active) setSummary(result);
       if (!isViewingAs && ["operations_manager", "managing_partner", ].includes(role || "")) {
-        const retentionResponse = await fetch("/api/retention/review", { headers: { Authorization: `Bearer ${data.session?.access_token || ""}` } });
+        const retentionResponse = await apiFetch("/api/retention/review");
         if (retentionResponse.ok) {
           const retentionResult = await retentionResponse.json();
           if (active) setRetentionMatters(retentionResult.matters || []);

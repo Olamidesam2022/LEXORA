@@ -3,6 +3,7 @@ import { CreditCard, FileText, Plus, ReceiptText } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { apiFetch } from "@/lib/api-fetch";
 
 type Choice = { id: string; display_name?: string; title?: string };
 type FeeNote = { id: string; client_id: string; matter_id: string; reference: string; description: string; amount: number; currency: string; issued_at: string; status: string; clients?: { display_name: string } | null; matters?: { title: string } | null };
@@ -19,8 +20,9 @@ export function BillingPage() {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const request = async (path: string, init: RequestInit = {}) => {
-    const { data } = await (await import("@/integrations/supabase/client")).supabase.auth.getSession();
-    const response = await fetch(path, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token || ""}`, ...init.headers } });
+    const headers = new Headers(init.headers);
+    headers.set("Content-Type", "application/json");
+    const response = await apiFetch(path, { ...init, headers });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error || "Request failed");
     return body;
