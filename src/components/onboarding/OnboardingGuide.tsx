@@ -119,6 +119,7 @@ interface OnboardingGuideProps {
   userId: string;
   userName: string;
   role: AppRole;
+  accountCreatedAt?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onNavigate: (view: string) => void;
@@ -128,6 +129,7 @@ export function OnboardingGuide({
   userId,
   userName,
   role,
+  accountCreatedAt,
   open,
   onOpenChange,
   onNavigate,
@@ -147,11 +149,14 @@ export function OnboardingGuide({
     if (!userId) return;
 
     const hasSeenGuide = window.localStorage.getItem(storageKey) === "true";
-    if (!hasSeenGuide) {
+    const createdAt = accountCreatedAt ? new Date(accountCreatedAt).getTime() : Number.NaN;
+    const accountAge = Date.now() - createdAt;
+    const isNewAccount = accountAge >= 0 && accountAge <= 30 * 24 * 60 * 60 * 1000;
+    if (!hasSeenGuide && isNewAccount) {
       setActiveStep(0);
       onOpenChange(true);
     }
-  }, [onOpenChange, storageKey, userId]);
+  }, [accountCreatedAt, onOpenChange, storageKey, userId]);
 
   const markSeen = () => {
     window.localStorage.setItem(storageKey, "true");

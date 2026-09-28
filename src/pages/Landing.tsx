@@ -16,6 +16,13 @@ import {
   ShieldCheck,
   Sparkles,
   UsersRound,
+  LayoutDashboard,
+  Bell,
+  Moon,
+  CircleUserRound,
+  Clock3,
+  FolderOpen,
+  Settings2,
 } from "lucide-react";
 import { BrandLogo } from "@/components/layout/BrandLogo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -66,44 +73,58 @@ export default function Landing() {
             <div className="landing-proofline"><ShieldCheck className="h-4 w-4" /> Private by design <span /> Role-based access <span /> Recorded approvals</div>
           </div>
 
-          <div className="landing-preview-wrap" aria-label="Illustration of the LEXORA workspace">
-            <div className="landing-preview-orb landing-preview-orb-one" />
-            <div className="landing-preview-orb landing-preview-orb-two" />
-            <div className="landing-app-preview">
-              <div className="landing-app-topbar">
+          <div className="landing-preview-wrap" aria-label="Static sample dashboard preview">
+            <div className="landing-app-preview landing-demo-dashboard">
+              <aside className="landing-demo-sidebar">
                 <BrandLogo compact />
-                <span className="landing-preview-label">WORKSPACE PREVIEW</span>
-                <div className="landing-preview-search"><Search className="h-3.5 w-3.5" /><span>Search clients and matters</span><kbd>⌘ K</kbd></div>
-                <span className="landing-avatar">Z</span>
-              </div>
-              <div className="landing-app-body">
-                <aside className="landing-preview-sidebar">
-                  <span className="landing-side-active"><BriefcaseBusiness /> Matters</span>
+                <nav aria-label="Sample workspace navigation">
+                  <span className="landing-demo-nav-active"><LayoutDashboard /> Dashboard</span>
                   <span><UsersRound /> Clients</span>
-                  <span><Files /> Documents</span>
                   <span><CircleDollarSign /> Billing</span>
-                  <div className="landing-side-label">WORKSPACE</div>
+                  <span><BriefcaseBusiness /> Matters</span>
+                  <span><FileCheck2 /> Advisory</span>
+                  <span><Files /> Document Vault</span>
                   <span><CalendarDays /> Calendar</span>
-                  <span><ShieldCheck /> Approvals</span>
-                </aside>
-                <div className="landing-preview-content">
-                  <div className="landing-preview-heading"><div><p>YOUR WORKSPACE</p><h2>Good morning, team</h2></div><span className="landing-preview-chip"><Sparkles /> Today at a glance</span></div>
-                  <div className="landing-preview-stats">
-                    <div><span>Active matters</span><strong>24</strong><small><i /> 4 practice areas</small></div>
-                    <div><span>Awaiting review</span><strong>06</strong><small>Across the approval chain</small></div>
-                    <div><span>Upcoming deadlines</span><strong>08</strong><small>Next 7 days</small></div>
+                  <span><FolderOpen /> Records</span>
+                </nav>
+                <span className="landing-demo-sidebar-footer"><Settings2 /> Settings</span>
+              </aside>
+              <div className="landing-demo-main">
+                <header className="landing-demo-topbar">
+                  <div className="landing-demo-page-title"><strong>Dashboard</strong><small>Monday, 28 September 2026</small></div>
+                  <div className="landing-demo-top-actions">
+                    <div className="landing-demo-search"><Search /><span>Search clients, matters, documents</span></div>
+                    <Bell /><Moon /><CircleUserRound />
                   </div>
-                  <div className="landing-preview-list">
-                    <div className="landing-preview-list-head"><strong>Recent matter activity</strong><span>View all <ChevronRight /></span></div>
-                    <div className="landing-preview-entry"><span className="landing-entry-icon entry-green"><FileCheck2 /></span><div><strong>Share Purchase Agreement</strong><small>Acme Holdings · M&amp;A</small></div><span className="landing-status status-review">In ops review</span></div>
-                    <div className="landing-preview-entry"><span className="landing-entry-icon entry-sand"><BriefcaseBusiness /></span><div><strong>Regulatory Compliance Review</strong><small>Northstar Energy · Regulatory</small></div><span className="landing-status status-open">In progress</span></div>
-                    <div className="landing-preview-entry"><span className="landing-entry-icon entry-blue"><BadgeCheck /></span><div><strong>Board Advisory Memorandum</strong><small>Meridian Group · Corporate</small></div><span className="landing-status status-approved">Approved</span></div>
+                </header>
+                <div className="landing-demo-content">
+                  <div className="landing-demo-greeting">
+                    <h2>Good afternoon, Adeola</h2>
+                    <div className="landing-demo-tabs"><span className="is-active">Firm</span><span>Matters</span><span>Documents</span><span>Calendar</span><span>Users</span></div>
+                  </div>
+                  <div className="landing-demo-stats">
+                    <article><span className="landing-demo-stat-icon"><BriefcaseBusiness /></span><small>LEXORA</small><p>Active matters</p><strong>18</strong><em>Across 4 practice areas</em></article>
+                    <article><span className="landing-demo-stat-icon"><CircleDollarSign /></span><small>LEXORA</small><p>Outstanding fees</p><strong>₦4.8m</strong><em>12 fee notes</em></article>
+                    <article><span className="landing-demo-stat-icon"><Files /></span><small>LEXORA</small><p>Documents on file</p><strong>36</strong><em>5 awaiting review</em></article>
+                    <article><span className="landing-demo-stat-icon"><CalendarDays /></span><small>LEXORA</small><p>Upcoming deadlines</p><strong>4</strong><em>Next 7 days</em></article>
+                  </div>
+                  <div className="landing-demo-panels">
+                    <section className="landing-demo-shortcuts">
+                      <div><span><BriefcaseBusiness /></span><strong>Matters</strong></div>
+                      <div><span><Files /></span><strong>Documents</strong></div>
+                      <div><span><CalendarDays /></span><strong>Calendar</strong></div>
+                      <div><span><UsersRound /></span><strong>Users</strong></div>
+                    </section>
+                    <section className="landing-demo-deadlines">
+                      <header><div><strong>Upcoming Deadlines</strong><small>Deadlines over the next seven days</small></div><span>View Calendar</span></header>
+                      <div className="landing-demo-deadline-row"><span className="landing-demo-date">29<br /><small>SEP</small></span><div><strong>Board resolution filing</strong><small>Northstar Energy · Corporate</small></div><em><Clock3 /> 10:00 am</em></div>
+                      <div className="landing-demo-deadline-row"><span className="landing-demo-date">30<br /><small>SEP</small></span><div><strong>Submit witness statement</strong><small>Adeyemi v. Meridian Group · Litigation</small></div><em><Clock3 /> 12:30 pm</em></div>
+                      <div className="landing-demo-deadline-row"><span className="landing-demo-date">02<br /><small>OCT</small></span><div><strong>Contract review due</strong><small>Harbour Foods · Commercial</small></div><em><Clock3 /> 4:00 pm</em></div>
+                    </section>
                   </div>
                 </div>
               </div>
-              <div className="landing-preview-foot"><LockKeyhole /> Client information stays within approved access.</div>
             </div>
-            <div className="landing-floating-note"><span><Check /></span><div><strong>Approval recorded</strong><small>Every step leaves a trail</small></div></div>
           </div>
         </section>
 

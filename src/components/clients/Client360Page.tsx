@@ -156,7 +156,6 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
             primary={client.display_name}
             secondary={client.legal_name || client.email || client.client_type}
             tag={<Badge variant="outline" className="max-w-full truncate">{client.client_type}</Badge>}
-            metric="—"
             date={client.created_at ? new Date(client.created_at).toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "2-digit" }) : "—"}
             action={<ChevronRight className="h-4 w-[18px] text-muted-foreground" />}
             onClick={() => void selectClient(client)}

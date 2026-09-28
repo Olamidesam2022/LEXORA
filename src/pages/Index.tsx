@@ -921,6 +921,7 @@ const Index = () => {
         userId={user.id}
         userName={currentUser.name}
         role={currentUser.role}
+        accountCreatedAt={profile?.created_at}
         open={guideOpen}
         onOpenChange={setGuideOpen}
         onNavigate={handleViewChange}
