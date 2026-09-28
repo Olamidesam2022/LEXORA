@@ -108,6 +108,7 @@ const Index = () => {
   const [clientSearchResults, setClientSearchResults] = useState<Array<{ id: string; display_name: string; email?: string | null }>>([]);
   const [clientOptions, setClientOptions] = useState<Array<{ id: string; display_name: string }>>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [addMatterOpen, setAddMatterOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const { matters, metrics, createMatter, updateMatter, deleteMatter, closeMatter } = useMatters();
@@ -132,10 +133,9 @@ const Index = () => {
       if (active) setClientOptions(payload.clients || []);
     }).catch(console.error);
     return () => { active = false; };
-  }, [user?.id]);
+  }, [user?.id, addMatterOpen]);
 
   // Dialog states
-  const [addMatterOpen, setAddMatterOpen] = useState(false);
   const [addAdvisoryOpen, setAddAdvisoryOpen] = useState(false);
   const [uploadDocumentOpen, setUploadDocumentOpen] = useState(false);
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -712,7 +712,6 @@ const Index = () => {
             matters={closedMatters}
             documents={documents}
             auditLogs={auditLogs}
-            onViewMatter={handleViewMatter}
           />
         );
       case "archive":

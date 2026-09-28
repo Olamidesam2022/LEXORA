@@ -374,6 +374,19 @@
     background-color: hsl(var(--muted) / 0.5);
   }
 
+  .matter-registry-row.aligned-list-row-selectable:hover .aligned-list-cell,
+  .matter-registry-row.aligned-list-row-selectable:hover {
+    background-color: transparent;
+  }
+
+  .matter-registry-row .aligned-list-primary {
+    transition: color 160ms ease;
+  }
+
+  .matter-registry-row.aligned-list-row-selectable:hover .aligned-list-primary {
+    color: hsl(var(--primary));
+  }
+
   .aligned-list-row-no-hover:hover .aligned-list-cell {
     background-color: transparent;
   }

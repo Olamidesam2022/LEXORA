@@ -23,9 +23,11 @@ const statusIndex: Record<string, number> = {
 
 interface StatusProgressBarProps {
   status?: string | null;
+  onStatusChange?: (status: string) => void;
+  disabledStatuses?: string[];
 }
 
-export function StatusProgressBar({ status }: StatusProgressBarProps) {
+export function StatusProgressBar({ status, onStatusChange, disabledStatuses = [] }: StatusProgressBarProps) {
   const currentIndex = statusIndex[(status || "open").toLowerCase()] ?? 0;
 
   return (
@@ -34,19 +36,26 @@ export function StatusProgressBar({ status }: StatusProgressBarProps) {
         {statusSteps.map((step, index) => {
           const isComplete = index < currentIndex;
           const isCurrent = index === currentIndex;
+          const stepStatus = step.key === "open" ? "Active" : step.label;
+          const isDisabled = !onStatusChange || disabledStatuses.includes(step.key);
 
           return (
             <div key={step.key} className="flex flex-1 items-center last:flex-none">
-              <div
+              <button
+                type="button"
+                onClick={() => onStatusChange?.(stepStatus)}
+                disabled={isDisabled}
+                aria-label={`Set case status to ${step.label}`}
+                aria-current={isCurrent ? "step" : undefined}
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors",
+                  "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors disabled:cursor-default",
                   isComplete && "border-primary bg-primary text-primary-foreground",
                   isCurrent && "border-accent bg-accent text-accent-foreground",
                   !isComplete && !isCurrent && "border-muted bg-background text-muted-foreground",
                 )}
               >
                 {index + 1}
-              </div>
+              </button>
               {index < statusSteps.length - 1 && (
                 <div
                   className={cn(
@@ -60,14 +69,28 @@ export function StatusProgressBar({ status }: StatusProgressBarProps) {
         })}
       </div>
       <div className="grid grid-cols-4 gap-2 text-center text-[11px] font-medium text-muted-foreground sm:text-xs">
-        {statusSteps.map((step, index) => (
-          <span
-            key={step.key}
-            className={cn(index === currentIndex && "text-accent-foreground")}
-          >
-            {step.label}
-          </span>
-        ))}
+        {statusSteps.map((step, index) => {
+          const isCurrent = index === currentIndex;
+          const stepStatus = step.key === "open" ? "Active" : step.label;
+          const isDisabled = !onStatusChange || disabledStatuses.includes(step.key);
+
+          return (
+            <button
+              key={step.key}
+              type="button"
+              onClick={() => onStatusChange?.(stepStatus)}
+              disabled={isDisabled}
+              aria-label={`Set case status to ${step.label}`}
+              aria-current={isCurrent ? "step" : undefined}
+              className={cn(
+                "rounded px-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-default disabled:hover:text-muted-foreground sm:text-xs",
+                isCurrent && "text-accent-foreground",
+              )}
+            >
+              {step.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

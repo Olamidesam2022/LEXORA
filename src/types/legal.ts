@@ -61,7 +61,7 @@ export interface Matter {
   proceduralStage: ProceduralStage;
   assignedCounsel: string;
   status: LitigationStatus;
-  nextHearing: Date;
+  nextHearing: Date | null;
   court: string;
   filedDate: Date;
   description: string;

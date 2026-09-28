@@ -92,12 +92,12 @@ export function ViewMatterDialog({ open, onOpenChange, matterItem }: ViewMatterD
                 <span>Next Hearing</span>
               </div>
               <p className="font-medium text-foreground">
-                {matterItem.nextHearing.toLocaleDateString('en-NG', {
+                {matterItem.nextHearing?.toLocaleDateString('en-NG', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
-                })}
+                }) || 'Not scheduled'}
               </p>
             </div>}
 

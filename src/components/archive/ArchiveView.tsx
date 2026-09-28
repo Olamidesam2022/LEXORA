@@ -4,6 +4,7 @@ import {
   Download,
   Eye,
   FileText,
+  History,
   MapPin,
   Search,
   Scale,
@@ -12,6 +13,8 @@ import {
 } from "lucide-react";
 import { formatPracticeArea, LegalDocument, Matter } from "@/types/legal";
 import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
+import { Button } from "@/components/ui/button";
+import { useMatterProgressModal } from "@/hooks/useMatterProgressModal";
 import { useState } from "react";
 import {
   Dialog,
@@ -45,6 +48,7 @@ export function ArchiveView({
   onViewDocument,
   onDownloadDocument,
 }: ArchiveViewProps) {
+  const { openModal } = useMatterProgressModal();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMatter, setSelectedMatter] = useState<Matter | null>(null);
   const archivedMatters = matters.filter((matterItem) => matterItem.status === "Closed");
@@ -183,9 +187,20 @@ export function ArchiveView({
                         {selectedMatterDocuments.length === 1 ? "" : "s"} attached
                       </p>
                     </div>
-                    <span className="status-pill bg-muted text-muted-foreground">
-                      Closed
-                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() => {
+                        const matterId = selectedMatter.id;
+                        setSelectedMatter(null);
+                        openModal(matterId);
+                      }}
+                    >
+                      <History className="h-4 w-4" />
+                      Full History
+                    </Button>
                   </div>
                   <div className="divide-y divide-border">
                     {selectedMatterDocuments.length === 0 ? (

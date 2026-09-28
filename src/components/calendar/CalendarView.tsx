@@ -49,6 +49,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
   const getMattersForDay = (day: number) => {
     return matters.filter(c => {
       const hearingDate = c.nextHearing;
+      if (!hearingDate) return false;
       return (
         hearingDate.getDate() === day &&
         hearingDate.getMonth() === currentDate.getMonth() &&
@@ -67,7 +68,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
   };
 
   const upcomingHearings = matters
-    .filter(c => c.nextHearing >= new Date())
+    .filter((c): c is typeof c & { nextHearing: Date } => !!c.nextHearing && c.nextHearing >= new Date())
     .sort((a, b) => a.nextHearing.getTime() - b.nextHearing.getTime())
     .slice(0, 5);
 
@@ -87,6 +88,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
   const getMattersForDate = (date: Date) =>
     matters.filter(c => {
       const hearingDate = c.nextHearing;
+      if (!hearingDate) return false;
       return (
         hearingDate.getDate() === date.getDate() &&
         hearingDate.getMonth() === date.getMonth() &&

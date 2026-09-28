@@ -38,6 +38,7 @@ interface AddMatterDialogProps {
     court?: string;
     nextHearing?: string;
     filingDeadline?: string;
+    initialNote?: string;
     status?: string;
   }) => Promise<void>;
   matterItem?: Matter | null;
@@ -68,6 +69,7 @@ export function AddMatterDialog({
     court: '',
     nextHearing: '',
     filingDeadline: '',
+    initialNote: '',
     status: 'Active' as LitigationStatus,
     description: '',
   });
@@ -91,6 +93,15 @@ export function AddMatterDialog({
       } catch {
         meta = {};
       }
+      const assignedUserIds = matterItem.assignedUserIds?.length
+        ? matterItem.assignedUserIds
+        : matterItem.assignedTo
+          ? [matterItem.assignedTo]
+          : [];
+      const assignedCounsel = assignableUsers
+        .filter((account) => assignedUserIds.includes(account.id))
+        .map((account) => account.name)
+        .join(", ") || (matterItem.assignedCounsel === "Assigned" ? "" : matterItem.assignedCounsel);
 
       setFormData({
         clientId: matterItem.clientId || '',
@@ -99,16 +110,13 @@ export function AddMatterDialog({
         matterTitle: matterItem.matterTitle,
         adversaryParty: matterItem.adversaryParty === "Unspecified" ? "" : matterItem.adversaryParty,
         proceduralStage: matterItem.proceduralStage,
-        assignedCounsel: matterItem.assignedCounsel === "Unassigned" ? "" : matterItem.assignedCounsel,
+        assignedCounsel: assignedCounsel === "Unassigned" ? "" : assignedCounsel,
         assignedTo: matterItem.assignedTo || '',
-        assignedUserIds: matterItem.assignedUserIds?.length
-          ? matterItem.assignedUserIds
-          : matterItem.assignedTo
-            ? [matterItem.assignedTo]
-            : [],
+        assignedUserIds,
         court: matterItem.court === "Unspecified" ? "" : matterItem.court,
-        nextHearing: matterItem.nextHearing.toISOString().slice(0, 10),
+        nextHearing: matterItem.nextHearing?.toISOString().slice(0, 10) || '',
         filingDeadline: meta.filingDeadline || '',
+        initialNote: '',
         status: matterItem.status,
         description: matterItem.description,
       });
@@ -126,11 +134,12 @@ export function AddMatterDialog({
         court: '',
         nextHearing: '',
         filingDeadline: '',
+        initialNote: '',
         status: 'Active',
         description: '',
       });
     }
-  }, [matterItem, open]);
+  }, [assignableUsers, matterItem, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,6 +166,7 @@ export function AddMatterDialog({
         court: isLitigation ? formData.court : "",
         nextHearing: isLitigation ? formData.nextHearing : "",
         filingDeadline: isLitigation ? formData.filingDeadline : "",
+        initialNote: formData.initialNote,
         status: formData.status,
       });
 
@@ -188,6 +198,7 @@ export function AddMatterDialog({
         court: '',
         nextHearing: '',
         filingDeadline: '',
+        initialNote: '',
         status: 'Active',
         description: '',
       });
@@ -274,6 +285,16 @@ export function AddMatterDialog({
                 onChange={(e) => setFormData(prev => ({ ...prev, court: e.target.value }))}
               />
             </div>
+          </div>}
+
+          {formData.practiceArea === "litigation" && <div className="space-y-2">
+            <Label htmlFor="nextHearing">Next hearing date</Label>
+            <Input
+              id="nextHearing"
+              type="date"
+              value={formData.nextHearing}
+              onChange={(e) => setFormData(prev => ({ ...prev, nextHearing: e.target.value }))}
+            />
           </div>}
 
           <div className="space-y-2">
@@ -385,15 +406,6 @@ export function AddMatterDialog({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="nextHearing">Next Date</Label>
-              <Input
-                id="nextHearing"
-                type="date"
-                value={formData.nextHearing}
-                onChange={(e) => setFormData(prev => ({ ...prev, nextHearing: e.target.value }))}
-              />
-            </div>
           </div>}
 
           {formData.practiceArea === "litigation" && <div className="space-y-2">
@@ -414,6 +426,17 @@ export function AddMatterDialog({
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="initialNote">Add a note</Label>
+            <Textarea
+              id="initialNote"
+              placeholder="Record an update or important detail..."
+              rows={3}
+              value={formData.initialNote}
+              onChange={(e) => setFormData(prev => ({ ...prev, initialNote: e.target.value }))}
             />
           </div>
 

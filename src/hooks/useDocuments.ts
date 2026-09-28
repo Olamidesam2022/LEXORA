@@ -6,6 +6,17 @@ import { useViewAs } from "@/context/ViewAsContext";
 import { writeAuditLog } from "@/lib/audit";
 
 const DOCUMENT_BUCKET = "lexora-documents";
+const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024;
+const DOCUMENT_MIME_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  txt: "text/plain",
+};
 
 interface DocumentRow {
   id: string;
@@ -180,10 +191,14 @@ export function useDocuments() {
     }) => {
       if (!user) throw new Error("You must be logged in.");
       if (!input.file) throw new Error("Please select a file to upload.");
+      if (input.file.size > MAX_DOCUMENT_SIZE) {
+        throw new Error("Files must be 50 MB or smaller.");
+      }
 
       const extension = input.file.name.includes(".")
         ? input.file.name.split(".").pop()?.toLowerCase()
         : "bin";
+      const mimeType = DOCUMENT_MIME_TYPES[extension || ""] || input.file.type || "application/octet-stream";
       const safeName = input.name
         .trim()
         .toLowerCase()
@@ -206,7 +221,7 @@ export function useDocuments() {
           type: input.type,
           matter_id: input.relatedMatter || null,
           client_id: clientId,
-          mime_type: input.file.type || "application/octet-stream",
+          mime_type: mimeType,
           version: "1.0",
           uploaded_by: uploaderName,
           size: input.file
@@ -223,10 +238,20 @@ export function useDocuments() {
 
       const storagePath = `${user.id}/${documentId}/1-${crypto.randomUUID()}-${safeName}.${extension || "bin"}`;
       const { error: uploadError } = await supabase.storage.from(DOCUMENT_BUCKET).upload(storagePath, input.file, {
-        contentType: input.file.type || "application/octet-stream",
+        contentType: mimeType,
         upsert: false,
       });
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        const { error: cleanupError } = await supabase
+          .from("documents")
+          .update({ deleted_at: new Date().toISOString() })
+          .eq("id", documentId)
+          .eq("created_by", user.id)
+          .eq("status", "draft")
+          .is("storage_path", null);
+        if (cleanupError) console.error("Failed to clean up incomplete document upload:", cleanupError);
+        throw uploadError;
+      }
       const { data: session } = await supabase.auth.getSession();
       const versionResponse = await fetch(`/api/documents/${data.id}/versions`, {
         method: "POST",
@@ -234,7 +259,7 @@ export function useDocuments() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.session?.access_token || ""}`,
         },
-        body: JSON.stringify({ storage_path: storagePath, mime_type: input.file.type || null }),
+        body: JSON.stringify({ storage_path: storagePath, mime_type: mimeType }),
       });
       if (!versionResponse.ok) {
         const payload = await versionResponse.json().catch(() => ({}));

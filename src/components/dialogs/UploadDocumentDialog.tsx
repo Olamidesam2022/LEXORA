@@ -72,6 +72,10 @@ export function UploadDocumentDialog({
       toast.error('Please select a file and fill in required fields');
       return;
     }
+    if (selectedFile.size > 50 * 1024 * 1024) {
+      toast.error('File is too large', { description: 'The maximum file size is 50 MB.' });
+      return;
+    }
 
     setUploadStatus('uploading');
     setUploadError(null);
@@ -114,7 +118,7 @@ export function UploadDocumentDialog({
         <DialogHeader>
           <DialogTitle>Upload Document</DialogTitle>
           <DialogDescription>
-            Upload a new document to the secure vault.
+            Upload a document to the secure vault. Maximum file size: 50 MB.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">

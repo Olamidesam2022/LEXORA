@@ -156,9 +156,9 @@ export function Dashboard({
         <div className="dashboard-panel">
           <div className="flex items-center justify-between border-b border-border/70 p-4">
             <div>
-              <h2 className="text-lg font-black text-foreground">
+              {/* <h2 className="text-lg font-black text-foreground">
                 Recommended for you
-              </h2>
+              </h2> */}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3 p-4">

@@ -4,6 +4,7 @@ import { DashboardMetrics, Matter } from "@/types/legal";
 import { useAuth } from "@/context/AuthContext";
 import { useViewAs } from "@/context/ViewAsContext";
 import { writeAuditLog } from "@/lib/audit";
+import { MATTERS_REFRESH_EVENT } from "@/lib/matter-events";
 
 interface MatterRow {
   id: string;
@@ -30,6 +31,12 @@ interface ClientAssignmentRow {
   assigned_to: string | null;
 }
 
+interface ProfileNameRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+}
+
 export interface MatterInput {
   title: string;
   clientId?: string;
@@ -44,6 +51,7 @@ export interface MatterInput {
   court?: string;
   nextHearing?: string;
   filingDeadline?: string;
+  initialNote?: string;
   status?: string;
 }
 
@@ -61,6 +69,8 @@ export const toMatter = (
   viewer?: { id: string; role?: string | null },
   assignedUserIds: string[] = [],
   clientAssignedToViewer = false,
+  profileNames: Map<string, string> = new Map(),
+  clientAssigneeId?: string | null,
 ): Matter => {
   const meta = parseDescription(row.description);
   const createdAt = new Date(row.created_at);
@@ -76,9 +86,12 @@ export const toMatter = (
     matterTitle: row.title,
     adversaryParty: meta.adversaryParty || "Unspecified",
     proceduralStage: meta.proceduralStage || "Mention",
-    assignedCounsel: meta.assignedCounsel || "Unassigned",
+    assignedCounsel:
+      assignedUserIds.map((id) => profileNames.get(id)).filter(Boolean).join(", ") ||
+      meta.assignedCounsel ||
+      (clientAssigneeId ? profileNames.get(clientAssigneeId) || "Assigned" : "Unassigned"),
     status: row.matter_status === "closed" ? "Closed" : meta.status || "Active",
-    nextHearing: meta.nextHearing ? new Date(meta.nextHearing) : createdAt,
+    nextHearing: meta.nextHearing ? new Date(meta.nextHearing) : null,
     court: meta.court || "Unspecified",
     filedDate: createdAt,
     description: meta.description || row.description || "",
@@ -121,11 +134,13 @@ export function useMatters() {
       .order("created_at", { ascending: false });
     const accessQuery = supabase.from("matter_access").select("matter_id,user_id");
     const clientAssignmentsQuery = supabase.from("clients").select("id,assigned_to");
+    const profilesQuery = supabase.from("profiles").select("id,full_name,email");
 
-    const [mattersResult, accessResult, clientAssignmentsResult] = await Promise.all([
+    const [mattersResult, accessResult, clientAssignmentsResult, profilesResult] = await Promise.all([
       mattersQuery,
       accessQuery,
       clientAssignmentsQuery,
+      profilesQuery,
     ]);
     const { data, error } = mattersResult;
 
@@ -141,12 +156,27 @@ export function useMatters() {
     if (clientAssignmentsResult.error) {
       console.error("Failed to load client assignments:", clientAssignmentsResult.error);
     }
+    if (profilesResult.error) {
+      console.error("Failed to load assigned user names:", profilesResult.error);
+    }
+    const profileNames = new Map(
+      ((profilesResult.data || []) as ProfileNameRow[]).map((profileRow) => [
+        profileRow.id,
+        profileRow.full_name || profileRow.email || "",
+      ]),
+    );
 
     const viewer = isViewingAs && viewingAsUser
       ? { id: viewingAsUser.id, role: viewingAsUser.role }
       : { id: user.id, role };
+    const clientAssignments = (clientAssignmentsResult.data || []) as ClientAssignmentRow[];
+    const clientAssigneesById = new Map(
+      clientAssignments
+        .filter((client) => client.assigned_to)
+        .map((client) => [client.id, client.assigned_to as string]),
+    );
     const assignedClientIds = new Set(
-      ((clientAssignmentsResult.data || []) as ClientAssignmentRow[])
+      clientAssignments
         .filter((client) => client.assigned_to === viewer.id)
         .map((client) => client.id),
     );
@@ -174,8 +204,13 @@ export function useMatters() {
         toMatter(
           row,
           viewer,
-          assignedUsersByMatter.get(row.id) || [],
+          Array.from(new Set([
+            ...(assignedUsersByMatter.get(row.id) || []),
+            ...(row.assigned_to ? [row.assigned_to] : []),
+          ])),
           !!row.client_id && assignedClientIds.has(row.client_id),
+          profileNames,
+          row.client_id ? clientAssigneesById.get(row.client_id) : null,
         ),
       ),
     );
@@ -248,6 +283,17 @@ export function useMatters() {
       } else if (assignedTo) {
         await syncMatterAccess(data.id, [assignedTo]);
       }
+      if (input.initialNote?.trim()) {
+        const { error: noteError } = await supabase.from("matter_notes").insert({
+          matter_id: data.id,
+          content: input.initialNote.trim(),
+          created_by: user.id,
+          user_id: user.id,
+          is_private: false,
+          note_type: "note",
+        });
+        if (noteError) throw noteError;
+      }
       await writeAuditLog({
         action: "CREATE",
         performedBy: user.id,
@@ -303,6 +349,17 @@ export function useMatters() {
       if (error) throw error;
       if (nextAssignedUserIds !== undefined) {
         await syncMatterAccess(id, nextAssignedUserIds);
+      }
+      if (input.initialNote?.trim()) {
+        const { error: noteError } = await supabase.from("matter_notes").insert({
+          matter_id: id,
+          content: input.initialNote.trim(),
+          created_by: user.id,
+          user_id: user.id,
+          is_private: false,
+          note_type: "note",
+        });
+        if (noteError) throw noteError;
       }
       await writeAuditLog({
         action: "UPDATE",
@@ -363,6 +420,12 @@ export function useMatters() {
     fetchMatters().catch(console.error);
   }, [fetchMatters]);
 
+  useEffect(() => {
+    const handleMattersRefresh = () => fetchMatters().catch(console.error);
+    window.addEventListener(MATTERS_REFRESH_EVENT, handleMattersRefresh);
+    return () => window.removeEventListener(MATTERS_REFRESH_EVENT, handleMattersRefresh);
+  }, [fetchMatters]);
+
   const metrics = useMemo<DashboardMetrics>(() => {
     const activeMatters = matters.filter(
       (matterItem) => !["Closed", "Archived"].includes(matterItem.status),
@@ -375,6 +438,7 @@ export function useMatters() {
       urgentHearings: activeMatters.filter(
         (matterItem) =>
           matterItem.practiceArea === "litigation" &&
+          matterItem.nextHearing !== null &&
           matterItem.nextHearing >= now && matterItem.nextHearing <= soon,
       ).length,
       winRate: 0,

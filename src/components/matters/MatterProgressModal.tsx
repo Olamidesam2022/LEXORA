@@ -20,9 +20,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useViewAs } from "@/context/ViewAsContext";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StatusProgressBar } from "@/components/matters/StatusProgressBar";
 import { formatPracticeArea, MatterNote, MatterTask, MatterTaskPriority, MatterTaskStatus } from "@/types/legal";
 import { writeAuditLog } from "@/lib/audit";
+import { refreshMatters } from "@/lib/matter-events";
 
 interface MatterProgressModalProps {
   matterId: string;
@@ -37,6 +55,7 @@ interface CaseRow {
   assigned_to?: string | null;
   created_at?: string | null;
   practice_area?: string | null;
+  matter_status?: string | null;
 }
 
 interface ProfileRow {
@@ -252,11 +271,12 @@ function toTask(row: TaskRow, profiles: Map<string, string>): MatterTask {
 
 export function MatterProgressModal({ matterId, onClose }: MatterProgressModalProps) {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, role } = useAuth();
   const { viewingAsUser, isViewingAs } = useViewAs();
   const [state, setState] = useState<ModalState>(emptyState);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
     "overview" | "notes" | "tasks" | "documents" | "activity"
   >("overview");
@@ -273,6 +293,10 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
   const [sittingDate, setSittingDate] = useState("");
   const [sittingTime, setSittingTime] = useState("");
   const [isSavingSittingDate, setIsSavingSittingDate] = useState(false);
+  const [progressStatus, setProgressStatus] = useState("Active");
+  const [proceduralStage, setProceduralStage] = useState("Mention");
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
 
   const fetchCaseProgress = useCallback(async () => {
     setError(null);
@@ -280,7 +304,7 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
 
     const caseQuery = supabase
       .from("matters")
-      .select("id,title,description,created_by,assigned_to,created_at,practice_area")
+      .select("id,title,description,created_by,assigned_to,created_at,practice_area,matter_status")
       .eq("id", matterId)
       .single();
     const notesQuery = supabase
@@ -341,12 +365,12 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
 
     if (caseResult.error) throw caseResult.error;
     const caseRecord = caseResult.data as CaseRow;
+    const accessRows = (accessResult.data || []) as CaseAccessRow[];
     if (
       viewingAsUser &&
       viewingAsUser.role !== "managing_partner" &&
       viewingAsUser.role !== "operations_manager"
     ) {
-      const accessRows = (accessResult.data || []) as CaseAccessRow[];
       const canViewedUserAccessCase =
         caseRecord.assigned_to === viewingAsUser.id ||
         accessRows.some((access) => access.user_id === viewingAsUser.id);
@@ -369,10 +393,14 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
     const tasks = ((tasksResult.data || []) as TaskRow[]).map((row) =>
       toTask(row, profileMap),
     );
+    const meta = parseMeta(caseRecord.description);
+    if (!meta.assignedCounsel && (caseRecord.assigned_to || accessRows.length > 0)) {
+      meta.assignedCounsel = "Assigned";
+    }
 
     setState({
       caseRecord,
-      meta: parseMeta(caseRecord.description),
+      meta,
       noteCount: notes.length,
       documentCount: (documentsResult.data || []).length,
       overdueDeadlineCount: deadlinesResult.count ?? 0,
@@ -490,14 +518,20 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
     setSittingTime(toTimeInputValue(state.meta.nextHearing));
   }, [state.meta.nextHearing]);
 
+  useEffect(() => {
+    setProgressStatus(state.meta.status || "Active");
+    setProceduralStage(state.meta.proceduralStage || "Mention");
+  }, [state.meta.proceduralStage, state.meta.status]);
+
   const caseRecord = state.caseRecord;
   const caseNumber = state.caseRecord?.practice_area === "litigation"
     ? state.meta.suitNumber || `Matter ${matterId.slice(0, 8)}`
     : state.caseRecord?.title || `Matter ${matterId.slice(0, 8)}`;
   const isLitigation = state.caseRecord?.practice_area === "litigation";
   const matterTitle = caseRecord?.title || "Untitled case";
-  const isReadOnly = isViewingAs;
+  const isReadOnly = isViewingAs || caseRecord?.matter_status === "closed";
   const canEdit = Boolean(user && caseRecord && !isReadOnly);
+  const canCloseMatter = canEdit && (role === "operations_manager" || role === "managing_partner");
   const todayInputValue = getTodayInputValue();
   const openTaskCount = state.tasks.filter((task) => task.status !== "completed").length;
   const completedTaskCount = state.tasks.filter((task) => task.status === "completed").length;
@@ -643,29 +677,32 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
     if (isReadOnly) return;
     if (!user || !caseRecord || !sittingDate) return;
     if (sittingDate < todayInputValue) {
-      setError("Choose today or a future sitting date.");
+      setActionError("Choose today or a future sitting date.");
       return;
     }
     const nextSittingValue = toSittingDateTimeValue(sittingDate, sittingTime);
     if (sittingTime && new Date(nextSittingValue).getTime() < Date.now()) {
-      setError("Choose a future sitting time.");
+      setActionError("Choose a future sitting time.");
       return;
     }
 
     setIsSavingSittingDate(true);
-    setError(null);
+    setActionError(null);
     try {
       const updatedMeta: CaseMeta = {
         ...state.meta,
         nextHearing: nextSittingValue,
       };
-      const { error: caseError } = await supabase
+      const { data: updatedCase, error: caseError } = await supabase
         .from("matters")
         .update({
           description: JSON.stringify(updatedMeta),
         })
-        .eq("id", matterId);
+        .eq("id", matterId)
+        .select("id")
+        .maybeSingle();
       if (caseError) throw caseError;
+      if (!updatedCase) throw new Error("You do not have permission to update this matter.");
       await writeAuditLog({
         action: "UPDATE",
         performedBy: user.id,
@@ -674,8 +711,78 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
         details: `Set sitting date for ${caseNumber} to ${formatDateTime(updatedMeta.nextHearing)}`,
       });
       await fetchCaseProgress();
+    } catch (saveError) {
+      setActionError(saveError instanceof Error ? saveError.message : "Failed to save sitting date.");
     } finally {
       setIsSavingSittingDate(false);
+    }
+  };
+
+  const handleSaveProgress = async () => {
+    if (!canEdit || !user || !caseRecord) return;
+    if (progressStatus === "Closed") {
+      if (!canCloseMatter) return;
+      setConfirmCloseOpen(true);
+      return;
+    }
+    setIsSavingProgress(true);
+    setActionError(null);
+    try {
+      const updatedMeta: CaseMeta = {
+        ...state.meta,
+        status: progressStatus,
+        ...(isLitigation ? { proceduralStage } : {}),
+      };
+      const { data: updatedCase, error: caseError } = await supabase
+        .from("matters")
+        .update({ description: JSON.stringify(updatedMeta) })
+        .eq("id", matterId)
+        .select("id")
+        .maybeSingle();
+      if (caseError) throw caseError;
+      if (!updatedCase) throw new Error("You do not have permission to update this matter.");
+      await writeAuditLog({
+        action: "UPDATE",
+        performedBy: user.id,
+        targetId: matterId,
+        resource: "Case",
+        details: `Updated ${caseNumber} progress to ${progressStatus}${isLitigation ? ` at ${proceduralStage} stage` : ""}`,
+      });
+      refreshMatters();
+      await fetchCaseProgress();
+    } catch (saveError) {
+      setActionError(saveError instanceof Error ? saveError.message : "Failed to update case progress.");
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  const handleConfirmClose = async () => {
+    if (!user || !canCloseMatter) return;
+    setIsSavingProgress(true);
+    setActionError(null);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const response = await fetch(`/api/matters/${matterId}/close`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.session?.access_token || ""}` },
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Failed to close matter.");
+      await writeAuditLog({
+        action: "UPDATE",
+        performedBy: user.id,
+        targetId: matterId,
+        resource: "Matter",
+        details: `Closed matter: ${matterTitle}`,
+      });
+      refreshMatters();
+      setConfirmCloseOpen(false);
+      onClose();
+    } catch (closeError) {
+      setActionError(closeError instanceof Error ? closeError.message : "Failed to close matter.");
+    } finally {
+      setIsSavingProgress(false);
     }
   };
 
@@ -755,7 +862,42 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
 
           {!isLoading && !error && caseRecord && (
             <>
-              <StatusProgressBar status={state.meta.status} />
+              {actionError && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  {actionError}
+                </div>
+              )}
+              <section className="space-y-4 rounded-lg border border-border bg-background p-4">
+                <StatusProgressBar
+                  status={progressStatus}
+                  onStatusChange={canEdit ? setProgressStatus : undefined}
+                  disabledStatuses={canCloseMatter ? [] : ["closed"]}
+                />
+                {isLitigation && (
+                  <div className="space-y-2">
+                    <label htmlFor="proceduralStage" className="text-sm font-semibold text-foreground">
+                      Procedural stage
+                    </label>
+                    <Select value={proceduralStage} onValueChange={setProceduralStage} disabled={!canEdit}>
+                      <SelectTrigger id="proceduralStage"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mention">Mention</SelectItem>
+                        <SelectItem value="Interlocutory">Interlocutory</SelectItem>
+                        <SelectItem value="Trial">Trial</SelectItem>
+                        <SelectItem value="Judgment">Judgment</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {canEdit && (
+                  <div className="sm:col-span-2">
+                    <Button type="button" onClick={handleSaveProgress} disabled={isSavingProgress} className="gap-2">
+                      {isSavingProgress ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Save Progress
+                    </Button>
+                  </div>
+                )}
+              </section>
               <div className="rounded-lg border border-border bg-background p-4">
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="font-semibold text-foreground">Task progress</span>
@@ -1254,6 +1396,31 @@ export function MatterProgressModal({ matterId, onClose }: MatterProgressModalPr
           )}
         </div>
       </div>
+      <AlertDialog open={confirmCloseOpen} onOpenChange={(open) => {
+        if (!isSavingProgress) setConfirmCloseOpen(open);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close this matter?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The matter will leave active lists, become read-only, and appear in Archive under its retention period.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSavingProgress}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                handleConfirmClose();
+              }}
+              disabled={isSavingProgress}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isSavingProgress ? "Closing..." : "Close matter"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>,
     document.body,
   );

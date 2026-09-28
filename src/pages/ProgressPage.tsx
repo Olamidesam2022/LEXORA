@@ -120,11 +120,11 @@ export default function ProgressPage() {
                         Next Hearing
                       </div>
                       <p className="mt-1 text-sm font-extrabold text-foreground">
-                        {matterItem.nextHearing.toLocaleDateString("en-NG", {
+                        {matterItem.nextHearing?.toLocaleDateString("en-NG", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
-                        })}
+                        }) || "Not scheduled"}
                       </p>
                     </div>}
                     {matterItem.practiceArea === "litigation" && <div className="rounded-xl border border-border bg-card p-3">

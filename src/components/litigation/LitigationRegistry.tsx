@@ -151,6 +151,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
             const nextHearing = matterItem.nextHearing;
             return <AlignedListRow
               key={matterItem.id}
+              className="matter-registry-row"
               avatar={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary"><BriefcaseBusiness className="h-4 w-4" /></span>}
               primary={matterItem.matterTitle}
               secondary={isLitigation ? `vs. ${matterItem.adversaryParty} · ${matterItem.suitNumber}` : `${formatPracticeArea(matterItem.practiceArea)} · ${matterItem.description}`}

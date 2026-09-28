@@ -10,7 +10,9 @@ export function RiskMonitor({ matters }: RiskMonitorProps) {
   const now = new Date();
   const seventyTwoHours = 72 * 60 * 60 * 1000;
   
-  const urgentMatters = matters.filter(c => c.practiceArea === 'litigation').filter(c => {
+  const urgentMatters = matters.filter((c): c is typeof c & { nextHearing: Date } =>
+    c.practiceArea === 'litigation' && c.nextHearing !== null,
+  ).filter(c => {
     const timeToHearing = c.nextHearing.getTime() - now.getTime();
     return timeToHearing > 0 && timeToHearing <= seventyTwoHours;
   }).sort((a, b) => a.nextHearing.getTime() - b.nextHearing.getTime());

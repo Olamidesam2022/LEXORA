@@ -34,7 +34,12 @@ export default function SignUp() {
       });
     } catch (err) {
       console.error(err);
-      toast.error(err?.message || "Signup failed");
+      const message = err instanceof Error ? err.message : "Signup failed";
+      toast.error(
+        message.toLowerCase().includes("email rate limit exceeded")
+          ? "Signup email limit reached. Please try again later or contact your Supabase administrator to configure SMTP and review Auth rate limits."
+          : message,
+      );
     } finally {
       setLoading(false);
     }

@@ -7,10 +7,12 @@ import {
   ClipboardList,
   FileText,
   FolderSearch,
+  History,
   MapPin,
   Search,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useMatterProgressModal } from "@/hooks/useMatterProgressModal";
 import { AuditLog, LegalDocument, Matter } from "@/types/legal";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +20,6 @@ interface RecordsViewProps {
   matters: Matter[];
   documents: LegalDocument[];
   auditLogs: AuditLog[];
-  onViewMatter?: (matterItem: Matter) => void;
 }
 
 interface MatterNoteRow {
@@ -64,8 +65,8 @@ export function RecordsView({
   matters,
   documents,
   auditLogs,
-  onViewMatter,
 }: RecordsViewProps) {
+  const { openModal } = useMatterProgressModal();
   const [searchQuery, setSearchQuery] = useState("");
   const [notes, setNotes] = useState<MatterNoteRow[]>([]);
   const [tasks, setTasks] = useState<MatterTaskRow[]>([]);
@@ -249,7 +250,7 @@ export function RecordsView({
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-background/70 px-2.5 py-1">
                     <CalendarDays className="h-3.5 w-3.5" />
-                    Next date {formatDate(matterItem.nextHearing)}
+                    Next date {matterItem.nextHearing ? formatDate(matterItem.nextHearing) : 'Not scheduled'}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-background/70 px-2.5 py-1">
                     <CheckCircle2 className="h-3.5 w-3.5" />
@@ -305,9 +306,10 @@ export function RecordsView({
 
               <div className="flex shrink-0 items-start">
                 <button
-                  onClick={() => onViewMatter?.(matterItem)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-extrabold text-foreground transition-colors hover:bg-foreground hover:text-background"
+                  onClick={() => openModal(matterItem.id)}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
                 >
+                  <History className="h-4 w-4" />
                   Full History
                 </button>
               </div>
