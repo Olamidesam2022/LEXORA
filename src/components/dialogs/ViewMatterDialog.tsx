@@ -50,7 +50,7 @@ export function ViewMatterDialog({ open, onOpenChange, matterItem }: ViewMatterD
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Status Badges */}
+
           <div className="flex flex-wrap gap-2">
             {isLitigation && <Badge variant="outline" className={stageColors[matterItem.proceduralStage]}>
               {matterItem.proceduralStage}
@@ -60,7 +60,7 @@ export function ViewMatterDialog({ open, onOpenChange, matterItem }: ViewMatterD
             </Badge>
           </div>
 
-          {/* Matter Details */}
+
           <div className="grid gap-4 sm:grid-cols-2">
             {isLitigation && <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ export function ViewMatterDialog({ open, onOpenChange, matterItem }: ViewMatterD
             </div>
           </div>
 
-          {/* Description */}
+
           {matterItem.description && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">Matter description</h4>

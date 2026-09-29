@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  ChevronDown, 
+import {
+  Search,
+  Filter,
+  Plus,
+  ChevronDown,
   Eye,
   Edit,
   Trash2,
@@ -39,7 +39,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
   const [showFilters, setShowFilters] = useState(false);
 
   const filteredMatters = matters.filter(matterItem => {
-    const matchesSearch = 
+    const matchesSearch =
       matterItem.matterTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       formatPracticeArea(matterItem.practiceArea).toLowerCase().includes(searchQuery.toLowerCase()) ||
       (matterItem.practiceArea === 'litigation' && (matterItem.suitNumber.toLowerCase().includes(searchQuery.toLowerCase()) || matterItem.adversaryParty.toLowerCase().includes(searchQuery.toLowerCase()))) ||
@@ -53,7 +53,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Header */}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">
@@ -71,7 +71,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
         )}
       </div>
 
-      {/* Search and Filters */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -109,7 +109,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
         <option value="needs_review">Needs review</option>
       </select>
 
-      {/* Filter Options */}
+
       {showFilters && (
         <div className="surface-card animate-fade-in p-4">
           <p className="mb-3 text-sm font-medium text-foreground">Procedural Stage</p>
@@ -118,8 +118,8 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
               onClick={() => setStageFilter('all')}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                stageFilter === 'all' 
-                  ? "bg-primary text-primary-foreground" 
+                stageFilter === 'all'
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
@@ -131,8 +131,8 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
                 onClick={() => setStageFilter(stage)}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  stageFilter === stage 
-                    ? "bg-primary text-primary-foreground" 
+                  stageFilter === stage
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -174,7 +174,7 @@ export function LitigationRegistry({ matters, onAddMatter, onViewMatter, onEditM
         </AlignedList>
       </div>
 
-      {/* Empty State */}
+
       {filteredMatters.length === 0 && (
         <div className="surface-card flex flex-col items-center justify-center border-dashed py-12 text-center">
           <div className="mb-4 rounded-full bg-muted p-4">

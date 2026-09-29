@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { 
-  Search, 
-  Upload, 
-  FolderOpen, 
-  FileText, 
+import {
+  Search,
+  Upload,
+  FolderOpen,
+  FileText,
   FileSpreadsheet,
   File,
   Download,
@@ -67,13 +67,13 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
       ? matters.find((matterItem) => matterItem.id === doc.matterId)
       : undefined;
     const matterTitle = relatedMatter?.matterTitle || "";
-    const matchesSearch = 
+    const matchesSearch =
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.uploadedBy.toLowerCase().includes(searchQuery.toLowerCase()) ||
       matterTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesType = typeFilter === 'all' || doc.type === typeFilter;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -87,7 +87,7 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Header */}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {onUpload && (
           <button
@@ -100,7 +100,7 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
         )}
       </div>
 
-      {/* Search and Filters */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -140,7 +140,7 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
         </div>
       </div>
 
-      {/* Document type filters */}
+
       <section className="space-y-2" aria-label="Filter documents by type">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Document type</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -180,12 +180,12 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
         </div>
       </section>
 
-      {/* Documents Grid View */}
+
       {viewMode === 'grid' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {pagedDocuments.map((doc, index) => {
             const Icon = typeIcons[doc.type];
-            
+
             return (
               <div
                 key={doc.id}
@@ -243,14 +243,14 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
                 </div>
 
                 <div className="flex gap-2 border-t border-border/70 bg-muted/20 p-3">
-                  <button 
+                  <button
                     onClick={() => onViewDocument?.(doc)}
                     className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-background py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
                   >
                     <Eye className="h-4 w-4" />
                     <span>View</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => onDownloadDocument?.(doc)}
                     className="icon-button bg-background shadow-sm"
                     aria-label={`Download ${doc.name}`}
@@ -273,7 +273,7 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
         </div>
       )}
 
-      {/* Documents List View */}
+
       {viewMode === 'list' && (
         <AppTableShell>
           <AlignedList>
@@ -307,7 +307,7 @@ export function DocumentVault({ documents, matters = [], onUpload, onViewDocumen
         </AppTableShell>
       )}
 
-      {/* Empty State */}
+
       {filteredDocuments.length === 0 && (
         <div className="surface-card flex flex-col items-center justify-center border-dashed py-12 text-center">
           <div className="mb-4 rounded-full bg-muted p-4">

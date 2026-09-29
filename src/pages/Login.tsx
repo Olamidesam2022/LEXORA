@@ -83,7 +83,7 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email Field */}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
               <div className="relative">
@@ -100,7 +100,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Password Field */}
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -128,7 +128,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Forgot Password Link */}
+
             <div className="text-right">
               <button
                 type="button"
@@ -145,7 +145,7 @@ export default function Login() {
               </button>
             </div>
 
-            {/* Login Button */}
+
             <Button type="submit" className="min-h-11 w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -161,7 +161,7 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Help Text */}
+
           <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4">
             <p className="text-sm text-muted-foreground text-center">
               Don't have an account?{" "}
@@ -175,7 +175,7 @@ export default function Login() {
             </p>
           </div>
 
-          {/* Footer */}
+
           <p className="mt-6 text-center text-xs text-muted-foreground">
             Secure law firm workspace
             <br />

@@ -134,7 +134,6 @@ const Index = () => {
     return () => { active = false; };
   }, [user?.id, addMatterOpen]);
 
-  // Dialog states
   const [addAdvisoryOpen, setAddAdvisoryOpen] = useState(false);
   const [uploadDocumentOpen, setUploadDocumentOpen] = useState(false);
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -146,7 +145,6 @@ const Index = () => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
 
-  // Selected items for view dialogs
   const [selectedMatter, setSelectedMatter] = useState<Matter | null>(null);
   const [selectedAdvisory, setSelectedAdvisory] =
     useState<AdvisoryRequest | null>(null);
@@ -198,7 +196,6 @@ const Index = () => {
     }
   }, [matters, isViewingAs, location.pathname, navigate]);
 
-  // Swipe gestures for mobile sidebar
   useSwipeGesture(mainContentRef, {
     onSwipeRight: () => setSidebarOpen(true),
     onSwipeLeft: () => setSidebarOpen(false),
@@ -206,13 +203,11 @@ const Index = () => {
     edgeThreshold: 40,
   });
 
-  // Handle logout
   const handleLogout = async () => {
     await signOut();
     toast.info("You have been logged out");
   };
 
-  // View handlers
   const handleViewMatter = (matterItem: Matter) => {
     openModal(matterItem.id);
   };
@@ -395,9 +390,6 @@ const Index = () => {
               note_type: "system",
             });
 
-            if (noteError) {
-              console.error("Failed to insert document removal system note:", noteError);
-            }
           }
 
           await deleteDocument(doc);
@@ -589,7 +581,6 @@ const Index = () => {
     return () => { active = false; window.clearTimeout(timer); };
   }, [globalSearchQuery]);
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -603,12 +594,10 @@ const Index = () => {
     );
   }
 
-  // Redirect to login if not authenticated
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Create a compatible user object for components that expect the legacy User type
   const currentUser: LegacyUser = {
     id: user.id,
     name: profile?.full_name || user.email || "User",
@@ -643,7 +632,6 @@ const Index = () => {
     toast.error("Document is no longer available.");
   };
 
-  // Render the current view
   const renderView = () => {
     switch (activeView) {
       case "clients":
@@ -776,7 +764,7 @@ const Index = () => {
       ref={mainContentRef}
       className="flex h-dvh w-full min-w-0 overflow-hidden bg-background touch-pan-y"
     >
-      {/* Sidebar */}
+
       <Sidebar
         currentUser={workspaceUser}
         activeView={activeView}
@@ -788,7 +776,7 @@ const Index = () => {
         onCollapsedChange={setSidebarCollapsed}
       />
 
-      {/* Main Content */}
+
       <div
         className={cn(
           "flex h-full min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300",
@@ -850,7 +838,7 @@ const Index = () => {
         </main>
       </div>
 
-      {/* Dialogs */}
+
       <AddMatterDialog
         open={addMatterOpen}
         onOpenChange={(open) => {

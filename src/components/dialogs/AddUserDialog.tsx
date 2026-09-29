@@ -39,13 +39,12 @@ export function AddUserDialog({ open, onOpenChange, onUserCreated }: AddUserDial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.role) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       toast.error('Please enter a valid email address');

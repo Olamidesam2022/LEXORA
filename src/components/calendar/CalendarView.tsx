@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   Calendar as CalendarIcon,
   Clock,
   MapPin,
@@ -123,7 +123,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6 overflow-hidden">
-      {/* Header */}
+
       <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center">
           <div className="flex rounded-lg border border-border bg-card overflow-hidden">
@@ -133,8 +133,8 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
                 onClick={() => setView(v)}
                 className={cn(
                   "px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium capitalize transition-colors",
-                  view === v 
-                    ? "bg-accent text-accent-foreground" 
+                  view === v
+                    ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -146,10 +146,10 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
       </div>
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
-        {/* Calendar Grid */}
+
         <div className="lg:col-span-2 overflow-hidden">
           <div className="surface-panel overflow-hidden">
-            {/* Calendar Header */}
+
             <div className="flex items-center justify-between border-b border-border p-3 sm:p-4">
               <button
                 onClick={() => navigateDate('prev')}
@@ -292,7 +292,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
           </div>
         </div>
 
-        {/* Upcoming Hearings Sidebar */}
+
         <div className="space-y-3 sm:space-y-4">
           <div className="surface-panel">
             <div className="border-b border-border px-3 py-3 sm:px-4">
@@ -349,7 +349,7 @@ export function CalendarView({ matters, onViewMatter }: CalendarViewProps) {
             </div>
           </div>
 
-          {/* Legend */}
+
           <div className="surface-panel p-3 sm:p-4">
             <h4 className="mb-2 sm:mb-3 text-xs sm:text-sm font-medium text-foreground">Legend</h4>
             <div className="space-y-1.5 sm:space-y-2">

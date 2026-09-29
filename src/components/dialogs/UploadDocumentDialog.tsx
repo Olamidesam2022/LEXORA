@@ -67,7 +67,7 @@ export function UploadDocumentDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedFile || !formData.name || !formData.type) {
       toast.error('Please select a file and fill in required fields');
       return;
@@ -89,7 +89,7 @@ export function UploadDocumentDialog({
       toast.success('Document uploaded successfully', {
         description: `"${formData.name}" has been added to the vault.`,
       });
-      
+
       setFormData({ name: '', type: '', relatedMatter: '' });
       setSelectedFile(null);
       setUploadStatus('idle');
@@ -122,7 +122,7 @@ export function UploadDocumentDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* File Drop Zone */}
+
           <div
             className={cn(
               "relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors",
@@ -140,7 +140,7 @@ export function UploadDocumentDialog({
               onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
             />
-            
+
             {selectedFile ? (
               <div className="flex items-center gap-3">
                 <File className="h-8 w-8 text-success" />

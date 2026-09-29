@@ -55,7 +55,7 @@ export function ViewDocumentDialog({ open, onOpenChange, document, onDownloadDoc
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Status Badges */}
+
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className={typeColors[document.type]}>
               {document.type}
@@ -68,7 +68,7 @@ export function ViewDocumentDialog({ open, onOpenChange, document, onDownloadDoc
             </Badge>
           </div>
 
-          {/* Document Details */}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -125,7 +125,7 @@ export function ViewDocumentDialog({ open, onOpenChange, document, onDownloadDoc
             )}
           </div>
 
-          {/* Download Button */}
+
           <Button onClick={handleDownload} className="w-full gap-2">
             <Download className="h-4 w-4" />
             Download Document

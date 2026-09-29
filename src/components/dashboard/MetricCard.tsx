@@ -14,14 +14,14 @@ interface MetricCardProps {
   className?: string;
 }
 
-export function MetricCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
+export function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
   trend,
   variant = 'default',
-  className 
+  className
 }: MetricCardProps) {
   const iconStyles = {
     default: 'bg-primary text-primary-foreground',

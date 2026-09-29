@@ -114,7 +114,7 @@ export function Settings({ currentUser }: SettingsProps) {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      {/* Header */}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-2">
           {saveStatus !== "idle" && (
@@ -152,7 +152,7 @@ export function Settings({ currentUser }: SettingsProps) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Account Details */}
+
         <div className="surface-card overflow-hidden">
           <div className="border-b border-border p-4">
             <div className="flex items-center gap-3">
@@ -217,9 +217,9 @@ export function Settings({ currentUser }: SettingsProps) {
           </div>
         </div>
 
-        {/* Appearance moved to dashboard */}
 
-        {/* Notifications */}
+
+
         <div className="surface-card overflow-hidden">
           <div className="border-b border-border p-4">
             <div className="flex items-center gap-3">
@@ -338,7 +338,7 @@ export function Settings({ currentUser }: SettingsProps) {
           </div>
         </div>
 
-        {/* Security */}
+
         <div className="surface-card overflow-hidden">
           <div className="border-b border-border p-4">
             <div className="flex items-center gap-3">
@@ -385,7 +385,7 @@ export function Settings({ currentUser }: SettingsProps) {
           </div>
         </div>
 
-        {/* System Information */}
+
         <div className="surface-card overflow-hidden">
           <div className="border-b border-border p-4">
             <div className="flex items-center gap-3">
@@ -431,7 +431,7 @@ export function Settings({ currentUser }: SettingsProps) {
         </div>
       </div>
 
-      {/* Contact Support */}
+
       <div className="surface-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">

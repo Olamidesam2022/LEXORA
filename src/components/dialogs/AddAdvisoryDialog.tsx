@@ -81,7 +81,7 @@ export function AddAdvisoryDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.requestedBy || !formData.department) {
       toast.error('Please fill in all required fields');
       return;

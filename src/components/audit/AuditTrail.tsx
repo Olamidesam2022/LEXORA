@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { 
-  Search, 
-  Download, 
-  Eye, 
-  Edit, 
-  Plus, 
+import {
+  Search,
+  Download,
+  Eye,
+  Edit,
+  Plus,
   Trash2,
   FileText,
   Scale,
@@ -52,13 +52,13 @@ export function AuditTrail({ logs }: AuditTrailProps) {
   const pageSize = 10;
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = 
+    const matchesSearch =
       log.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.resourceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.details.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesAction = actionFilter === 'all' || log.action === actionFilter;
-    
+
     const now = new Date();
     let matchesDate = true;
     if (dateRange === 'today') {
@@ -70,7 +70,7 @@ export function AuditTrail({ logs }: AuditTrailProps) {
       const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       matchesDate = log.timestamp >= monthAgo;
     }
-    
+
     return matchesSearch && matchesAction && matchesDate;
   });
 
@@ -124,20 +124,15 @@ export function AuditTrail({ logs }: AuditTrailProps) {
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Header */}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          {/* <p className="text-sm font-medium text-muted-foreground">
-            NDPR 2019 compliant activity logging
-          </p> */}
-        </div>
         <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">
           <Shield className="h-4 w-4" />
           <span className="font-medium">NDPR Compliant</span>
         </div>
       </div>
 
-      {/* Stats */}
+
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="elevated-card p-4">
           <p className="text-sm text-muted-foreground">Total Events</p>
@@ -163,7 +158,7 @@ export function AuditTrail({ logs }: AuditTrailProps) {
         </div>
       </div>
 
-      {/* Search and Filters */}
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -206,7 +201,7 @@ export function AuditTrail({ logs }: AuditTrailProps) {
         </div>
       </div>
 
-      {/* Audit Log Table - Desktop */}
+
       <AppTableShell className="hidden lg:block">
           <table className="w-full">
             <thead>
@@ -225,8 +220,8 @@ export function AuditTrail({ logs }: AuditTrailProps) {
                 const ResourceIcon = resourceIcons[log.resource] || FileText;
 
                 return (
-                  <tr 
-                    key={log.id} 
+                  <tr
+                    key={log.id}
                     className="table-row animate-fade-in"
                     style={{ animationDelay: `${index * 20}ms` }}
                   >
@@ -292,15 +287,15 @@ export function AuditTrail({ logs }: AuditTrailProps) {
         />
       </AppTableShell>
 
-      {/* Audit Log Cards - Mobile/Tablet */}
+
       <AppTableShell className="lg:hidden">
         {pagedLogs.map((log, index) => {
           const ActionIcon = actionIcons[log.action] || Eye;
           const ResourceIcon = resourceIcons[log.resource] || FileText;
 
           return (
-            <div 
-              key={log.id} 
+            <div
+              key={log.id}
               className="clean-list-row animate-fade-in"
               style={{ animationDelay: `${index * 20}ms` }}
             >
@@ -316,7 +311,7 @@ export function AuditTrail({ logs }: AuditTrailProps) {
                   {log.action}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm">
                 <ResourceIcon className="h-4 w-4 text-muted-foreground" />
                 <span className="text-foreground">{log.resource}</span>

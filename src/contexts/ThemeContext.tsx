@@ -42,7 +42,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(theme);
   }, [theme]);
 
-  // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
@@ -65,7 +64,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else if (newTheme === "light") {
       isDarkMode = false;
     } else {
-      // system
       const systemDark = window.matchMedia(
         "(prefers-color-scheme: dark)",
       ).matches;

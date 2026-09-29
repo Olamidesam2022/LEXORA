@@ -126,7 +126,6 @@ export function Sidebar({
   const filteredNavItems = navItems.filter((item) =>
     item.roles.includes(currentUser.role),
   );
-  // Close sidebar on navigation in mobile
   const handleNavClick = (viewId: string) => {
     onViewChange(viewId);
     if (onClose) onClose();
@@ -140,7 +139,6 @@ export function Sidebar({
     onCollapsedChange?.(!collapsed);
   };
 
-  // Prevent body scroll when mobile sidebar is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -186,7 +184,7 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile Overlay */}
+
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
@@ -194,23 +192,19 @@ export function Sidebar({
         />
       )}
 
-      {/* Sidebar */}
+
       <aside
         className={cn(
           "glass-sidebar fixed left-0 top-0 z-50 flex h-dvh max-h-dvh flex-col overflow-hidden transition-all duration-300 ease-in-out",
-          // Mobile: Full width drawer, hidden by default
           "w-[min(82vw,18rem)]",
-          // Mobile display
           !isOpen && "-translate-x-full md:translate-x-0",
           isOpen && "translate-x-0",
-          // Desktop: Collapsible with smooth width transition
           "md:relative md:translate-x-0",
           collapsed ? "md:w-20 lg:w-20" : "md:w-[17rem] lg:w-[17rem]",
-          // Prevent sidebar from being hidden on desktop when collapsed
           "md:block",
         )}
       >
-        {/* Header */}
+
         <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-sidebar-border/80 px-3">
           {(!collapsed || isOpen) && (
             <button
@@ -233,7 +227,7 @@ export function Sidebar({
             </button>
           )}
 
-          {/* Mobile close button */}
+
           <button
             onClick={onClose}
             className="ml-auto rounded-lg p-2 text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground md:hidden"
@@ -243,7 +237,7 @@ export function Sidebar({
           </button>
         </div>
 
-        {/* Navigation */}
+
         <nav className="min-h-0 flex-1 overflow-y-auto p-3 scrollbar-thin">
           <ul className="space-y-1.5">
             {filteredNavItems.map((item) => {
@@ -282,9 +276,9 @@ export function Sidebar({
           </ul>
         </nav>
 
-        {/* Footer */}
+
         <div className="shrink-0 border-t border-sidebar-border bg-sidebar p-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
-          {/* User Info */}
+
           <div
             className={cn(
               "mb-2.5 flex items-center gap-3 rounded-xl p-2 text-sidebar-foreground transition-colors duration-300 hover:bg-sidebar-accent",
@@ -306,7 +300,7 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Action Buttons */}
+
           <div
             className={cn(
                 "space-y-1.5",

@@ -143,7 +143,7 @@ export function AddMatterDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.clientId || !formData.matterTitle || formData.practiceArea === 'needs_review') {
       toast.error('Select a client, practice area, and matter title first');
       return;
@@ -184,7 +184,7 @@ export function AddMatterDialog({
             : undefined,
         },
       );
-      
+
       setFormData({
         clientId: '',
         practiceArea: 'corporate_commercial',

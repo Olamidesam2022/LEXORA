@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Shield, 
+import {
+  Search,
+  Plus,
+  Shield,
   User as UserIcon,
   Edit,
   Eye,
@@ -51,12 +51,12 @@ export function UserManagement({
       ? ['all', 'legal_officer']
       : ['all', 'operations_manager', 'managing_partner', 'legal_officer'];
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    
+
     return matchesSearch && matchesRole;
   });
   const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
@@ -68,7 +68,7 @@ export function UserManagement({
 
   return (
     <div className="space-y-4 p-4 md:p-6">
-      {/* Header */}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {onAddUser && (
           <button
@@ -81,7 +81,7 @@ export function UserManagement({
         )}
       </div>
 
-      {/* Role Distribution */}
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="elevated-card p-4">
           <div className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export function UserManagement({
         </div>
       </div>
 
-      {/* Search and Filters */}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -141,8 +141,8 @@ export function UserManagement({
               onClick={() => setRoleFilter(role)}
               className={cn(
                 "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                roleFilter === role 
-                  ? "bg-primary text-primary-foreground" 
+                roleFilter === role
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
@@ -152,7 +152,7 @@ export function UserManagement({
         </div>
       </div>
 
-      {/* Users List */}
+
       <AppTableShell>
         <AlignedList>
           {pagedUsers.map((user, index) => {
@@ -189,7 +189,7 @@ export function UserManagement({
         />
       </AppTableShell>
 
-      {/* Empty State */}
+
       {filteredUsers.length === 0 && (
         <div className="surface-card flex flex-col items-center justify-center border-dashed py-12 text-center">
           <div className="mb-4 rounded-full bg-muted p-4">
@@ -202,7 +202,7 @@ export function UserManagement({
         </div>
       )}
 
-      {/* Permissions Info */}
+
       <div className="surface-card bg-muted/30 p-5">
         <h3 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
           <Shield className="h-5 w-5 text-accent" />

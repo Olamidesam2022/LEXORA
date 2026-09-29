@@ -4,20 +4,20 @@ interface SwipeConfig {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
   threshold?: number;
-  edgeThreshold?: number; // Distance from edge to trigger edge swipe
+  edgeThreshold?: number;
 }
 
 export function useSwipeGesture(
   elementRef: React.RefObject<HTMLElement>,
   config: SwipeConfig
 ) {
-  const { 
-    onSwipeLeft, 
-    onSwipeRight, 
+  const {
+    onSwipeLeft,
+    onSwipeRight,
     threshold = 50,
-    edgeThreshold = 30 
+    edgeThreshold = 30
   } = config;
-  
+
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const touchEnd = useRef<{ x: number; y: number } | null>(null);
 
@@ -41,8 +41,7 @@ export function useSwipeGesture(
 
     const distanceX = touchStart.current.x - touchEnd.current.x;
     const distanceY = touchStart.current.y - touchEnd.current.y;
-    
-    // Only trigger if horizontal swipe is more significant than vertical
+
     const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY);
     const isSignificantSwipe = Math.abs(distanceX) > threshold;
 
@@ -54,7 +53,7 @@ export function useSwipeGesture(
       if (isLeftSwipe && onSwipeLeft) {
         onSwipeLeft();
       }
-      
+
       if (isRightSwipe && startedFromEdge && onSwipeRight) {
         onSwipeRight();
       }

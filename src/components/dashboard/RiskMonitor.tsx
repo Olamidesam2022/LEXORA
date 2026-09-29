@@ -9,7 +9,7 @@ interface RiskMonitorProps {
 export function RiskMonitor({ matters }: RiskMonitorProps) {
   const now = new Date();
   const seventyTwoHours = 72 * 60 * 60 * 1000;
-  
+
   const urgentMatters = matters.filter((c): c is typeof c & { nextHearing: Date } =>
     c.practiceArea === 'litigation' && c.nextHearing !== null,
   ).filter(c => {
@@ -22,7 +22,7 @@ export function RiskMonitor({ matters }: RiskMonitorProps) {
     const hours = Math.floor(diff / (60 * 60 * 1000));
     const days = Math.floor(hours / 24);
     const remainingHours = hours % 24;
-    
+
     if (days > 0) {
       return `${days}d ${remainingHours}h`;
     }
@@ -61,7 +61,7 @@ export function RiskMonitor({ matters }: RiskMonitorProps) {
 
       <div className="space-y-2 sm:space-y-3">
         {urgentMatters.map((matterItem, index) => (
-          <div 
+          <div
             key={matterItem.id}
             className={cn(
               "risk-alert animate-fade-in",

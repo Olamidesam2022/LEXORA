@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { 
-  Search, 
-  Plus, 
-  Clock, 
+import {
+  Search,
+  Plus,
+  Clock,
   AlertCircle,
   CheckCircle2,
   Loader2,
@@ -46,13 +46,13 @@ export function AdvisoryWorkflow({
   const [statusFilter, setStatusFilter] = useState<AdvisoryStatus | 'all'>('all');
 
   const filteredRequests = requests.filter(request => {
-    const matchesSearch = 
+    const matchesSearch =
       request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.requestNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.requestedBy.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || request.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -65,7 +65,7 @@ export function AdvisoryWorkflow({
 
   return (
     <div className="space-y-4 p-3 sm:p-4 md:p-6 overflow-hidden">
-      {/* Header */}
+
       <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
         {onAddRequest && (
           <button
@@ -78,7 +78,7 @@ export function AdvisoryWorkflow({
         )}
       </div>
 
-      {/* Search and Filters */}
+
       <div className="flex flex-col gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
@@ -99,8 +99,8 @@ export function AdvisoryWorkflow({
               onClick={() => setStatusFilter(status)}
               className={cn(
                 "flex-shrink-0 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap",
-                statusFilter === status 
-                  ? "bg-primary text-primary-foreground" 
+                statusFilter === status
+                  ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:text-foreground"
               )}
             >

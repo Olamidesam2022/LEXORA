@@ -360,7 +360,6 @@ app.get("/api/clients/:clientId/export", requireRoles("managing_partner"), async
   return res.json(bundle);
 });
 
-// Retained administrator endpoint; identity, approval, and role are verified here.
 app.patch("/api/admin/users/:userId", requireRoles("managing_partner"), async (req, res) => {
   const allowed = ["role", "status"];
   const updates = Object.fromEntries(Object.entries(req.body || {}).filter(([key]) => allowed.includes(key)));

@@ -16,7 +16,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isApproved, status, signOut } = useAuth();
 
@@ -27,7 +26,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }, [isLoading, signOut, status, user]);
 
   if (isLoading) {
-    return null; // Index handles its own loading state
+    return null;
   }
 
   if (!user) {
@@ -45,39 +44,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Keep public pages directly accessible, including when the browser has a
-// restored session. Successful sign-in navigates to the workspace explicitly.
-function PublicRoute({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Landing />} />
-    <Route
-      path="/login"
-      element={
-        <PublicRoute>
-          <Login />
-        </PublicRoute>
-      }
-    />
-    <Route
-      path="/signup"
-      element={
-        <PublicRoute>
-          <SignUp />
-        </PublicRoute>
-      }
-    />
-    <Route
-      path="/awaiting-approval"
-      element={
-        <PublicRoute>
-          <AwaitingApproval />
-        </PublicRoute>
-      }
-    />
+    <Route path="/login" element={<Login />} />
+    <Route path="/signup" element={<SignUp />} />
+    <Route path="/awaiting-approval" element={<AwaitingApproval />} />
     <Route
       path="/app/*"
       element={
@@ -86,7 +58,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
-    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
