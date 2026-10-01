@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { MouseEvent } from "react";
 import {
   ArrowDown,
   ArrowRight,
@@ -42,6 +43,44 @@ const approvalSteps = [
   { step: "03", role: "Managing Partner", action: "Give final approval" },
 ];
 
+function handleSmoothScroll(event: MouseEvent<HTMLAnchorElement>) {
+  const targetId = event.currentTarget.getAttribute("href");
+  if (!targetId?.startsWith("#")) return;
+
+  const target = document.querySelector(targetId);
+  if (!target) return;
+
+  event.preventDefault();
+  const targetTop = target.getBoundingClientRect().top + window.scrollY - 76;
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    window.scrollTo(0, targetTop);
+    window.history.replaceState(null, "", targetId);
+    return;
+  }
+
+  const startTop = window.scrollY;
+  const distance = targetTop - startTop;
+  const duration = Math.min(1800, Math.max(1000, Math.abs(distance) * 0.75));
+  const startTime = performance.now();
+  const easeInOut = (progress: number) => progress < 0.5
+    ? 2 * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+  const animate = (currentTime: number) => {
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    window.scrollTo(0, startTop + distance * easeInOut(progress));
+
+    if (progress < 1) {
+      window.requestAnimationFrame(animate);
+    } else {
+      window.history.replaceState(null, "", targetId);
+    }
+  };
+
+  window.requestAnimationFrame(animate);
+}
+
 export default function Landing() {
   return (
     <div className="landing-page min-h-screen bg-background text-foreground">
@@ -49,9 +88,9 @@ export default function Landing() {
         <div className="landing-container flex h-[76px] items-center justify-between">
           <BrandLogo to="/" />
           <nav aria-label="Main navigation" className="hidden items-center gap-8 text-sm font-semibold text-muted-foreground md:flex">
-            <a className="landing-nav-link" href="#platform">Platform</a>
-            <a className="landing-nav-link" href="#workflow">Workflow</a>
-            <a className="landing-nav-link" href="#capabilities">Capabilities</a>
+            <a className="landing-nav-link" href="#platform" onClick={handleSmoothScroll}>Platform</a>
+            <a className="landing-nav-link" href="#workflow" onClick={handleSmoothScroll}>Workflow</a>
+            <a className="landing-nav-link" href="#capabilities" onClick={handleSmoothScroll}>Capabilities</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
@@ -68,7 +107,7 @@ export default function Landing() {
             <p className="landing-lede">LEXORA brings client relationships, legal work, documents, approvals, and billing into one considered workspace for legal professionals.</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link to="/login" className="landing-cta">Enter your workspace <ArrowRight className="h-4 w-4" /></Link>
-              <a href="#capabilities" className="landing-text-link">Explore the platform <ArrowDown className="h-4 w-4" /></a>
+              <a href="#capabilities" className="landing-text-link" onClick={handleSmoothScroll}>Explore the platform <ArrowDown className="h-4 w-4" /></a>
             </div>
             <div className="landing-proofline"><ShieldCheck className="h-4 w-4" /> Private by design <span /> Role-based access <span /> Recorded approvals</div>
           </div>

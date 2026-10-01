@@ -110,6 +110,18 @@ app.patch("/api/clients/:clientId", async (req, res) => {
   return res.json({ client: data });
 });
 
+app.delete("/api/clients/:clientId", requireRoles("operations_manager", "managing_partner"), async (req, res) => {
+  const { data, error } = await req.db.from("clients")
+    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", req.params.clientId)
+    .is("deleted_at", null)
+    .select("id")
+    .maybeSingle();
+  if (error) return jsonError(res, 400, error.message);
+  if (!data) return jsonError(res, 404, "Client not found");
+  return res.status(204).end();
+});
+
 app.get("/api/clients/:clientId/360", async (req, res) => {
   const clientId = req.params.clientId;
   const { data: client, error: clientError } = await req.db.from("clients").select("*").eq("id", clientId).is("deleted_at", null).maybeSingle();

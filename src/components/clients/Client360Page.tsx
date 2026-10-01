@@ -1,10 +1,20 @@
 import { useEffect, useState } from "react";
-import { BriefcaseBusiness, ChevronRight, FileText, ReceiptText, Search, Wallet } from "lucide-react";
+import { BriefcaseBusiness, ChevronRight, FileText, ReceiptText, Search, Trash2, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfiles } from "@/hooks/useProfiles";
 import { AlignedList, AlignedListRow } from "@/components/ui/aligned-list";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatPracticeArea } from "@/types/legal";
 import { apiFetch } from "@/lib/api-fetch";
 
@@ -34,6 +44,8 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [editingClient, setEditingClient] = useState(false);
+  const [deletingClient, setDeletingClient] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newClientLegalName, setNewClientLegalName] = useState("");
   const [newClientType, setNewClientType] = useState("organization");
@@ -133,6 +145,24 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
     finally { setLoading(false); }
   };
 
+  const deleteClient = async () => {
+    if (!record) return;
+    setError(""); setDeletingClient(true);
+    try {
+      const response = await apiFetch(`/api/clients/${record.client.id}`, { method: "DELETE" });
+      const payload = response.status === 204 ? null : await response.json();
+      if (!response.ok) throw new Error(payload?.error || "Could not delete this client");
+      setClients((current) => current.filter((client) => client.id !== record.client.id));
+      setRecord(null);
+      setEditingClient(false);
+      setShowDeleteDialog(false);
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setDeletingClient(false);
+    }
+  };
+
   return <section className="space-y-6">
 
     {!record && <>
@@ -194,6 +224,7 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
           <div className="flex items-start gap-3">
             <div className="text-sm text-muted-foreground">{record.client.email}<br />{record.client.phone}{record.client.address && <><br />{record.client.address}</>}</div>
             {(role === "operations_manager" || role === "managing_partner" || record.client.assigned_to === user?.id) && <button type="button" onClick={() => setEditingClient((value) => !value)} className="rounded-md border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">{editingClient ? "Cancel" : "Edit client"}</button>}
+            {(role === "operations_manager" || role === "managing_partner") && <button type="button" onClick={() => setShowDeleteDialog(true)} disabled={deletingClient} className="inline-flex items-center gap-2 rounded-md border border-destructive/30 px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60"><Trash2 className="h-4 w-4" />Delete client</button>}
           </div>
         </div>
         {editingClient && <form onSubmit={updateClientDetails} className="mt-6 grid gap-3 border-t border-border pt-5 sm:grid-cols-2">
@@ -238,6 +269,22 @@ export function Client360Page({ initialClientId }: { initialClientId?: string | 
         </Panel>
       </div>
     </>}
+    <AlertDialog open={showDeleteDialog} onOpenChange={(open) => { if (!deletingClient) setShowDeleteDialog(open); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this client?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {record ? `${record.client.display_name} will be removed from active records. Related matters and history will be preserved.` : "This client will be removed from active records."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deletingClient}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={(event) => { event.preventDefault(); void deleteClient(); }} disabled={deletingClient} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {deletingClient ? "Deleting…" : "Delete client"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </section>;
 }
 
